@@ -51,34 +51,34 @@ export default function Admin() {
         link.click()
     }
 
-    if (loading) return <div className=\"p-4 text-center\">Carregando...</div>
+    if (loading) return <div className="p-4 text-center">Carregando...</div>
 
     return (
-        <div className=\"space-y-4\">
-            < div className =\"flex justify-between items-center\">
-                < h2 className =\"text-xl font-bold\">Relatório</h2>
-                    < Button variant =\"outline\" className=\"!w-auto\" onClick={exportCSV}>Exportar CSV</Button>
+        <div className="space-y-4">
+            <div className ="flex justify-between items-center">
+                < h2 className ="text-xl font-bold">Relatório</h2>
+                    < Button variant ="outline" className="!w-auto" onClick={exportCSV}>Exportar CSV</Button>
       </div >
 
-        <div className=\"bg-white rounded-lg shadow overflow-x-auto\">
-            < table className =\"min-w-full text-sm\">
-                < thead className =\"bg-gray-50 border-b\">
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
+            < table className ="min-w-full text-sm">
+                < thead className ="bg-gray-50 border-b">
                     < tr >
-                    <th className=\"p-3 text-left\">Placa</th>
-                        < th className =\"p-3 text-left\">Condutor</th>
-                            < th className =\"p-3 text-left\">Entrada</th>
-                                < th className =\"p-3 text-left\">Saída</th>
+                    <th className="p-3 text-left">Placa</th>
+                        < th className ="p-3 text-left">Condutor</th>
+                            < th className ="p-3 text-left">Entrada</th>
+                                < th className ="p-3 text-left">Saída</th>
             </tr >
           </thead >
           <tbody>
             {events.map(e => (
-              <tr key={e.id} className=\"border-b hover:bg-gray-50\">
-                <td className=\"p-3 font-medium\">{e.plate}</td>
-                <td className=\"p-3\">{e.driver_name}</td>
-        < td className =\"p-3\">{new Date(e.entry_at).toLocaleString('pt-BR')}</td>
-            < td className =\"p-3\">
+              <tr key={e.id} className="border-b hover:bg-gray-50">
+                <td className="p-3 font-medium">{e.plate}</td>
+                <td className="p-3">{e.driver_name}</td>
+        < td className ="p-3">{new Date(e.entry_at).toLocaleString('pt-BR')}</td>
+            < td className ="p-3">
     {
-        e.exit_at ? new Date(e.exit_at).toLocaleString('pt-BR') : <span className=\"text-green-600 font-bold\">No Pátio</span>}
+        e.exit_at ? new Date(e.exit_at).toLocaleString('pt-BR') : <span className="text-green-600 font-bold">No Pátio</span>}
                 </td >
               </tr >
             ))

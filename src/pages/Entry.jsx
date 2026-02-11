@@ -54,11 +54,11 @@ export default function Entry() {
     }
 
     return (
-        <div className=\"max-w-md mx-auto bg-white p-6 rounded-lg shadow\">
-            < h2 className =\"text-xl font-bold mb-4 text-green-700\">Registrar Entrada</h2>
+        <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
+            < h2 className ="text-xl font-bold mb-4 text-green-700">Registrar Entrada</h2>
                 < form onSubmit = { handleSubmit } >
                     <Input
-                        label=\"Placa\" 
+                        label="Placa" 
     value = { plate }
     onChange = { e => setPlate(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')) }
     onBlur = { handlePlateBlur }
@@ -66,15 +66,15 @@ export default function Entry() {
     required
         />
         <Input
-            label=\"Nome do Condutor\" 
+            label="Nome do Condutor" 
     value = { driver }
     onChange = { e => setDriver(e.target.value) }
     required
         />
-        { error && <p className=\"text-red-500 mb-3 text-sm\">{error}</p>}
-            < div className =\"flex gap-2\">
-                < Button variant =\"secondary\" onClick={() => navigate('/')}>Cancelar</Button>
-                    < Button type =\"submit\" variant=\"primary\" loading={loading}>Confirmar</Button>
+        { error && <p className="text-red-500 mb-3 text-sm">{error}</p>}
+            <div className ="flex gap-2">
+                < Button variant ="secondary" onClick={() => navigate('/')}>Cancelar</Button>
+                    < Button type ="submit" variant="primary" loading={loading}>Confirmar</Button>
         </div >
       </form >
     </div >
