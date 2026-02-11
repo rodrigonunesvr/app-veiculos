@@ -12,7 +12,7 @@ export default function App() {
         <AuthProvider>
             <BrowserRouter>
                 <Routes>
-                    <Route path=\"/login\" element={<Login />} />
+                    <Route path="/login\" element={<Login />} />
                     <Route element={<Layout />}>
                         <Route path=\"/\" element={<Home />} />
                         <Route path=\"/entry\" element={<Entry />} />
@@ -25,3 +25,4 @@ export default function App() {
         </AuthProvider>
     )
 }
+
