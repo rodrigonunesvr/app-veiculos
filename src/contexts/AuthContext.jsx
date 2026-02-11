@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .maybeSingle(); // evita erro quando não existir linha
+        .maybeSingle();
 
       if (error) console.error('Error fetching profile:', error);
       setProfile(data ?? null);
@@ -45,9 +45,7 @@ export const AuthProvider = ({ children }) => {
       }
     });
 
-    return () => {
-      data.subscription.unsubscribe();
-    };
+    return () => data.subscription.unsubscribe();
   }, []);
 
   const signIn = async (email, password) =>
