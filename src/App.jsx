@@ -8,10 +8,10 @@ import Exit from './pages/Exit';
 import Admin from './pages/Admin';
 
 function ProtectedRoute({ children }) {
-  const { session, loading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (loading) return null; // ou um loader simples
-  if (!session) return <Navigate to="/login" replace />;
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
 
   return children;
 }
