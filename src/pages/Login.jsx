@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Input from '../components/Input';
@@ -7,36 +7,34 @@ import Button from '../components/Button';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loadingLocal, setLoadingLocal] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const { signIn } = useAuth();
+  const { signIn, user, loading } = useAuth();
   const navigate = useNavigate();
+
+  // Se já logou (ou acabou de logar), sai da tela
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/', { replace: true });
+    }
+  }, [loading, user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setLoadingLocal(true);
     setErrorMsg('');
 
     try {
       const result = await signIn(email, password);
-
-      // Suporta vários formatos:
-      // - signIn() -> { data, error }
-      // - signIn() -> { error }
-      // - signIn() -> error (direto)
-      const maybeError =
-        result?.error ??
-        (result instanceof Error ? result : null);
-
+      const maybeError = result?.error ?? null;
       if (maybeError) throw maybeError;
 
-      // sucesso
-      navigate('/', { replace: true });
+      // não navega aqui; o useEffect navega quando user atualizar
     } catch (err) {
       setErrorMsg('Falha no login. Verifique suas credenciais.');
     } finally {
-      setLoading(false);
+      setLoadingLocal(false);
     }
   };
 
@@ -70,7 +68,7 @@ export default function Login() {
             </div>
           )}
 
-          <Button type="submit" loading={loading}>
+          <Button type="submit" loading={loadingLocal}>
             Entrar
           </Button>
         </form>
