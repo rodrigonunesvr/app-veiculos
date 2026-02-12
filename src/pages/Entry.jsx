@@ -76,24 +76,24 @@ export default function Entry() {
     }
 
     return (
-        <div className=\"max-w-md mx-auto bg-white p-6 rounded-lg shadow\">
-            < h2 className =\"text-xl font-bold mb-4 text-green-700\">Registrar Entrada</h2>
+        <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
+            < h2 className ="text-xl font-bold mb-4 text-green-700">Registrar Entrada</h2>
                 < form onSubmit = { handleSubmit } >
-                    <div className=\"bg-green-50 p-3 rounded mb-4 border border-green-200\">
-                        < p className =\"text-xs font-bold text-green-800 uppercase mb-2\">Quem está registrando?</p>
-                            < div className =\"grid grid-cols-2 gap-2\">
+                    <div className="bg-green-50 p-3 rounded mb-4 border border-green-200">
+                        < p className ="text-xs font-bold text-green-800 uppercase mb-2">Quem está registrando?</p>
+                            <div className ="grid grid-cols-2 gap-2">
                                 < Input
-    label =\"Militar (Nome)\" 
+    label ="Militar (Nome)" 
     value = { staffName }
     onChange = { e => setStaffName(e.target.value) }
-    placeholder =\"Sd Fulano\"
+    placeholder ="Sd Fulano"
     required
         />
         <Input
-            label=\"RG (5 dígitos)\" 
+            label="RG (5 dígitos)" 
     value = { staffRg }
     onChange = { e => setStaffRg(e.target.value.replace(/\\D/g, '').slice(0, 5)) }
-    placeholder =\"12345\"
+    placeholder ="12345"
     maxLength = { 5}
     required
         />
@@ -101,24 +101,24 @@ export default function Entry() {
         </div >
 
         <Input
-            label=\"Placa / Prefixo\" 
+            label="Placa / Prefixo" 
     value = { vehicleCode }
     onChange = { e => setVehicleCode(e.target.value.toUpperCase().replace(/\\s/g, '')) }
     onBlur = { handleBlur }
-    placeholder =\"ABC-1234\"
+    placeholder ="ABC-1234"
     required
         />
         <Input
-            label=\"Condutor\" 
+            label="Condutor" 
     value = { driver }
     onChange = { e => setDriver(e.target.value) }
     required
         />
 
-        <div className=\"mb-3\">
-            < label className =\"block text-sm font-medium text-gray-700 mb-1\">Destino</label>
+        <div className="mb-3">
+            < label className ="block text-sm font-medium text-gray-700 mb-1">Destino</label>
                 < select
-    className =\"w-full p-2 border rounded-md border-gray-300\"
+    className ="w-full p-2 border rounded-md border-gray-300"
     value = { destination }
     onChange = { e => setDestination(e.target.value) }
         >
@@ -128,20 +128,20 @@ export default function Entry() {
 
         { destination === 'OUTROS' && (
             <Input
-                label=\"Qual destino?\" 
+                label="Qual destino?" 
     value = { destinationOther }
     onChange = { e => setDestinationOther(e.target.value) }
     required
-    placeholder =\"Digite o destino...\"
+    placeholder ="Digite o destino..."
         />
         )
 }
 
 {
-    error && <p className=\"text-red-500 mb-3 text-sm\">{error}</p>}
-        < div className =\"flex gap-2\">
-            < Button variant =\"secondary\" onClick={() => navigate('/')}>Cancelar</Button>
-                < Button type =\"submit\" variant=\"primary\" loading={loading}>Confirmar Entrada</Button>
+    error && <p className="text-red-500 mb-3 text-sm">{error}</p>}
+        <div className ="flex gap-2">
+            < Button variant ="secondary" onClick={() => navigate('/')}>Cancelar</Button>
+                < Button type ="submit" variant="primary" loading={loading}>Confirmar Entrada</Button>
         </div >
       </form >
     </div >

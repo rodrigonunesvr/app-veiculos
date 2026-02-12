@@ -10,9 +10,9 @@ import { AuthProvider } from './context/AuthContext' // Assuming AuthProvider is
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom' // Assuming react-router-dom imports
 
 export default function App() {
-    <Route path=\"/admin\" element={<Admin />} />
+    <Route path="/admin" element={<Admin />} />
                                     </Route >
-        <Route path=\"*\" element={<Navigate to=\"/\" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
                                 </Routes >
                             </BrowserRouter >
                         </AuthProvider >
