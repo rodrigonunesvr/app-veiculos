@@ -75,28 +75,28 @@ export default function Entry() {
     }
 
     return (
-        <div className=\"max-w-md mx-auto bg-white p-6 rounded-lg shadow\">
-            < h2 className =\"text-xl font-bold mb-4 text-green-700\">Registrar Entrada</h2>
+        <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
+            < h2 className ="text-xl font-bold mb-4 text-green-700">Registrar Entrada</h2>
                 < form onSubmit = { handleSubmit } >
                     <Input
-                        label=\"Placa / Prefixo\" 
+                        label="Placa / Prefixo" 
     value = { vehicleCode }
     onChange = { e => setVehicleCode(e.target.value.toUpperCase().replace(/\\s/g, '')) }
     onBlur = { handleBlur }
-    placeholder =\"ABC-1234 ou 12345\"
+    placeholder ="ABC-1234 ou 12345"
     required
         />
         <Input
-            label=\"Condutor\" 
+            label="Condutor" 
     value = { driver }
     onChange = { e => setDriver(e.target.value) }
     required
         />
 
-        <div className=\"mb-3\">
-            < label className =\"block text-sm font-medium text-gray-700 mb-1\">Destino</label>
+        <div className="mb-3">
+            < label className ="block text-sm font-medium text-gray-700 mb-1">Destino</label>
                 < select
-    className =\"w-full p-2 border rounded-md border-gray-300\"
+    className ="w-full p-2 border rounded-md border-gray-300"
     value = { destination }
     onChange = { e => setDestination(e.target.value) }
         >
@@ -106,20 +106,20 @@ export default function Entry() {
 
         { destination === 'OUTROS' && (
             <Input
-                label=\"Qual destino?\" 
+                label="Qual destino?" 
     value = { destinationOther }
     onChange = { e => setDestinationOther(e.target.value) }
     required
-    placeholder =\"Digite o destino...\"
+    placeholder ="Digite o destino..."
         />
         )
 }
 
 {
-    error && <p className=\"text-red-500 mb-3 text-sm\">{error}</p>}
-        < div className =\"flex gap-2\">
-            < Button variant =\"secondary\" onClick={() => navigate('/')}>Cancelar</Button>
-                < Button type =\"submit\" variant=\"primary\" loading={loading}>Confirmar Entrada</Button>
+    error && <p className="text-red-500 mb-3 text-sm">{error}</p>}
+        <div className ="flex gap-2">
+            < Button variant ="secondary" onClick={() => navigate('/')}>Cancelar</Button>
+                < Button type ="submit" variant="primary" loading={loading}>Confirmar Entrada</Button>
         </div >
       </form >
     </div >
