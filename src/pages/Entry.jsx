@@ -13,6 +13,11 @@ export default function Entry() {
     const [driver, setDriver] = useState('')
     const [destination, setDestination] = useState(DESTINATIONS[0])
     const [destinationOther, setDestinationOther] = useState('')
+
+    // Audit Fields (v2.2)
+    const [staffName, setStaffName] = useState('')
+    const [staffRg, setStaffRg] = useState('')
+
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const navigate = useNavigate()
@@ -31,12 +36,11 @@ export default function Entry() {
         setError('')
 
         try {
-            // Check if already inside (optional in flexible mode, but good to warn)
-            // For v2.1, we allow flexible, so maybe just proceed or warn?
-            // User requirement: "Modelo de dados para suportar saída antes de entrada" -> implied loose constraints.
-            // But let's check active_vehicles view if we want to prevent double entry.
-            // "Validações: se já existe evento aberto... alertar" (from v1). Let's keep it for ENTRY.
+            // Validation Check (Audit)
+            if (staffName.length < 3) throw new Error('Nome do militar deve ter no mínimo 3 letras.')
+            if (!/^\\d{5}$/.test(staffRg)) throw new Error('RG do militar deve ter exatamente 5 dígitos.')
 
+            // Check Active
             const { data: active } = await supabase
                 .from('active_vehicles')
                 .select('id')
@@ -44,9 +48,7 @@ export default function Entry() {
                 .eq('type', 'ENTRY')
                 .single()
 
-            if (active) {
-                throw new Error('Veículo já consta como DENTRO (Último evento foi Entrada).')
-            }
+            if (active) throw new Error('Veículo já consta como DENTRO.')
 
             const finalDest = destination === 'OUTROS' ? destinationOther : destination
             if (!finalDest) throw new Error('Informe o destino.')
@@ -55,14 +57,13 @@ export default function Entry() {
                 vehicle_code: vehicleCode,
                 driver_name: driver,
                 destination: finalDest,
-                type: 'ENTRY'
+                type: 'ENTRY',
+                staff_name: staffName,
+                staff_rg5: staffRg
             })
 
             if (insertError) throw insertError
 
-            // Update vehicle registry (last_driver) - Handled by trigger usually, 
-            // but v2.1 didn't specify trigger update, assume v1 trigger on vehicle_events? 
-            // We moved to vehicle_movements. Let's update manually to be safe or create trigger later.
             await supabase.from('vehicles').upsert({ plate: vehicleCode, last_driver: driver })
 
             navigate('/')
@@ -75,28 +76,49 @@ export default function Entry() {
     }
 
     return (
-        <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
-            < h2 className ="text-xl font-bold mb-4 text-green-700">Registrar Entrada</h2>
+        <div className=\"max-w-md mx-auto bg-white p-6 rounded-lg shadow\">
+            < h2 className =\"text-xl font-bold mb-4 text-green-700\">Registrar Entrada</h2>
                 < form onSubmit = { handleSubmit } >
-                    <Input
-                        label="Placa / Prefixo" 
-    value = { vehicleCode }
-    onChange = { e => setVehicleCode(e.target.value.toUpperCase().replace(/\\s/g, '')) }
-    onBlur = { handleBlur }
-    placeholder ="ABC-1234 ou 12345"
+                    <div className=\"bg-green-50 p-3 rounded mb-4 border border-green-200\">
+                        < p className =\"text-xs font-bold text-green-800 uppercase mb-2\">Quem está registrando?</p>
+                            < div className =\"grid grid-cols-2 gap-2\">
+                                < Input
+    label =\"Militar (Nome)\" 
+    value = { staffName }
+    onChange = { e => setStaffName(e.target.value) }
+    placeholder =\"Sd Fulano\"
     required
         />
         <Input
-            label="Condutor" 
+            label=\"RG (5 dígitos)\" 
+    value = { staffRg }
+    onChange = { e => setStaffRg(e.target.value.replace(/\\D/g, '').slice(0, 5)) }
+    placeholder =\"12345\"
+    maxLength = { 5}
+    required
+        />
+          </div >
+        </div >
+
+        <Input
+            label=\"Placa / Prefixo\" 
+    value = { vehicleCode }
+    onChange = { e => setVehicleCode(e.target.value.toUpperCase().replace(/\\s/g, '')) }
+    onBlur = { handleBlur }
+    placeholder =\"ABC-1234\"
+    required
+        />
+        <Input
+            label=\"Condutor\" 
     value = { driver }
     onChange = { e => setDriver(e.target.value) }
     required
         />
 
-        <div className="mb-3">
-            < label className ="block text-sm font-medium text-gray-700 mb-1">Destino</label>
+        <div className=\"mb-3\">
+            < label className =\"block text-sm font-medium text-gray-700 mb-1\">Destino</label>
                 < select
-    className ="w-full p-2 border rounded-md border-gray-300"
+    className =\"w-full p-2 border rounded-md border-gray-300\"
     value = { destination }
     onChange = { e => setDestination(e.target.value) }
         >
@@ -106,20 +128,20 @@ export default function Entry() {
 
         { destination === 'OUTROS' && (
             <Input
-                label="Qual destino?" 
+                label=\"Qual destino?\" 
     value = { destinationOther }
     onChange = { e => setDestinationOther(e.target.value) }
     required
-    placeholder ="Digite o destino..."
+    placeholder =\"Digite o destino...\"
         />
         )
 }
 
 {
-    error && <p className="text-red-500 mb-3 text-sm">{error}</p>}
-        <div className ="flex gap-2">
-            < Button variant ="secondary" onClick={() => navigate('/')}>Cancelar</Button>
-                < Button type ="submit" variant="primary" loading={loading}>Confirmar Entrada</Button>
+    error && <p className=\"text-red-500 mb-3 text-sm\">{error}</p>}
+        < div className =\"flex gap-2\">
+            < Button variant =\"secondary\" onClick={() => navigate('/')}>Cancelar</Button>
+                < Button type =\"submit\" variant=\"primary\" loading={loading}>Confirmar Entrada</Button>
         </div >
       </form >
     </div >
