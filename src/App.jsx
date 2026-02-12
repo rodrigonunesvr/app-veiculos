@@ -1,4 +1,24 @@
+<<<<<<< HEAD
 import ProfileSetup from './pages/ProfileSetup'
+=======
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Layout from './components/Layout';
+import Login from './pages/Login';
+import Home from './pages/Home';
+import Entry from './pages/Entry';
+import Exit from './pages/Exit';
+import Admin from './pages/Admin';
+
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+
+  return children;
+}
+>>>>>>> b4892f26520e0b98bd3aa2239c5183f209b265b4
 
 export default function App() {
     return (
