@@ -14,6 +14,24 @@ export default function Layout() {
 
     if (!user) return <Outlet />
 
+    // Enforce Profile Completion (v2.1)
+    // We check if "profile" is loaded and has data. 
+    // If loading is true, we wait.
+    // If profile is loaded but missing name/rg -> redirect.
+    // Exception: Don't redirect if we are ALREADY at /profile-setup (handled by Route outside Layout).
+    // Actually ProfileSetup is outside Layout, so if we render Layout, we check.
+
+    // Use a small effect or check here
+    const { profile, loading } = useAuth()
+    if (loading) return <div className="h-screen flex items-center justify-center">Carregando...</div>
+
+    if (!profile?.full_name || !profile?.rg5) {
+        // Force redirect to setup
+        // We can't use Navigate here easily if it loop. 
+        // Ensure Layout is ONLY used for protected pages.
+        return <Navigate to="/profile-setup" replace />
+    }
+
     const navItemClass = (path) => `flex flex-col items-center p-2 text-xs ${location.pathname === path ? 'text-blue-600' : 'text-gray-500'}`
 
     return (
@@ -25,25 +43,25 @@ export default function Layout() {
         </button >
       </header >
 
-        <main className="flex-1 p-4 pb-20">
+        <main className=\"flex-1 p-4 pb-20\">
             < Outlet />
       </main >
 
-        <nav className="fixed bottom-0 w-full bg-white border-t flex justify-around py-2 pb-safe">
-            < Link to ="/" className={navItemClass('/')}>
-                < Home size = { 24} />
-                    <span>Início</span>
+        <nav className=\"fixed bottom-0 w-full bg-white border-t flex justify-around py-2 pb-safe\">
+        < Link to =\"/\" className={navItemClass('/')}>
+            < Home size = { 24} />
+                <span>Início</span>
         </Link >
-        <Link to="/entry" className={navItemClass('/entry')}>
+        <Link to=\"/entry\" className={navItemClass('/entry')}>
             < LogIn size = { 24} />
                 <span>Entrada</span>
         </Link >
-        <Link to="/exit" className={navItemClass('/exit')}>
-            < LogOut size = { 24} className ="rotate-180" /> {/* Visual hack for Exit */}
+        <Link to=\"/exit\" className={navItemClass('/exit')}>
+            < LogOut size = { 24} className =\"rotate-180\" /> {/* Visual hack for Exit */}
                 < span > Saída</span >
         </Link >
         { isAdmin && (
-            <Link to="/admin" className={navItemClass('/admin')}>
+            <Link to=\"/admin\" className={navItemClass('/admin')}>
                 < LayoutDashboard size = { 24} />
                     <span>Admin</span>
           </Link >

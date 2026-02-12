@@ -1,88 +1,128 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import Button from '../components/Button'
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 
 export default function Admin() {
-    const [events, setEvents] = useState([])
-    const [loading, setLoading] = useState(true)
+  const [movements, setMovements] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
-    useEffect(() => {
-        fetchEvents()
-    }, [])
+  useEffect(() => {
+    // Default: Last 7 days
+    const end = new Date()
+    const start = new Date()
+    start.setDate(end.getDate() - 7)
+    setStartDate(start.toISOString().split('T')[0])
+    setEndDate(end.toISOString().split('T')[0])
+    fetchMovements()
+  }, [])
 
-    const fetchEvents = async () => {
-        const { data } = await supabase
-            .from('vehicle_events')
-            .select(`
+  const fetchMovements = async () => {
+    setLoading(true)
+    let query = supabase
+      .from('vehicle_movements')
+      .select(`
         *,
         created_by_user:created_by (
-          full_name
+          full_name,
+          rg5
         )
       `)
-            .order('created_at', { ascending: false })
-            .limit(50)
+      .order('created_at', { ascending: false })
+      .limit(500)
 
-        // Fix: created_by might be null or constrained. 
-        // Adapting to schema: created_by links to auth.users, profiles link to auth.users.
-        // Joining auth.users is hard. Joining profiles on id=created_by is better.
-        // Let's assume created_by is the UUID.
+    if (startDate) query = query.gte('created_at', startDate + 'T00:00:00')
+    if (endDate) query = query.lte('created_at', endDate + 'T23:59:59')
 
-        setEvents(data || [])
-        setLoading(false)
-    }
+    const { data, error } = await query
+    if (error) console.error(error)
+    setMovements(data || [])
+    setLoading(false)
+  }
 
-    const exportCSV = () => {
-        if (!events.length) return
-        const headers = ['Placa', 'Condutor', 'Entrada', 'Saída']
-        const csvContent = [
-            headers.join(','),
-            ...events.map(e => [
-                e.plate,
-                e.driver_name,
-                new Date(e.entry_at).toLocaleString(),
-                e.exit_at ? new Date(e.exit_at).toLocaleString() : 'Em pátio'
-            ].join(','))
-        ].join('\\n')
+  const exportPDF = () => {
+    const doc = new jsPDF()
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-        const link = document.createElement('a')
-        link.href = URL.createObjectURL(blob)
-        link.download = 'relatorio.csv'
-        link.click()
-    }
+    doc.text(\"Relatório de Movimentação - Controle de Veículos\", 14, 15)
+    doc.setFontSize(10)
+    doc.text(`Período: ${startDate} a ${endDate}`, 14, 22)
 
-    if (loading) return <div className="p-4 text-center">Carregando...</div>
+    const tableColumn = [\"Data/Hora\", \"Tipo\", \"Veículo\", \"Condutor\", \"Destino\", \"Registrado Por\"]
+    const tableRows = []
 
-    return (
-        <div className="space-y-4">
-            <div className ="flex justify-between items-center">
-                < h2 className ="text-xl font-bold">Relatório</h2>
-                    < Button variant ="outline" className="!w-auto" onClick={exportCSV}>Exportar CSV</Button>
+    movements.forEach(m => {
+      const movementData = [
+        new Date(m.created_at).toLocaleString('pt-BR'),
+        m.type === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
+        m.vehicle_code,
+        m.driver_name,
+        m.destination || '-',
+        m.created_by_user ? `${m.created_by_user.full_name} (${m.created_by_user.rg5})` : 'Sistema'
+      ]
+      tableRows.push(movementData)
+    })
+
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 30,
+    })
+
+    doc.save(`relatorio_veiculos_${startDate}_${endDate}.pdf`)
+  }
+
+  return (
+    <div className=\"space-y-4\">
+      < div className =\"flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-lg shadow\">
+        < div className =\"flex gap-2 items-end\">
+          < div >
+          <label className=\"block text-xs text-gray-500\">Início</label>
+            < input type =\"date\" className=\"border p-1 rounded\" value={startDate} onChange={e => setStartDate(e.target.value)} />
+           </div >
+           <div>
+             <label className=\"block text-xs text-gray-500\">Fim</label>
+             <input type=\"date\" className=\"border p-1 rounded\" value={endDate} onChange={e => setEndDate(e.target.value)} />
+           </div >
+    <Button className=\"!w-auto py-1\" onClick={fetchMovements}>Filtrar</Button>
+        </div >
+    <div className=\"flex gap-2\">
+      < Button variant =\"primary\" className=\"!w-auto\" onClick={exportPDF}>Exportar PDF</Button>
+        </div >
       </div >
 
-        <div className="bg-white rounded-lg shadow overflow-x-auto">
-            < table className ="min-w-full text-sm">
-                < thead className ="bg-gray-50 border-b">
-                    < tr >
-                    <th className="p-3 text-left">Placa</th>
-                        < th className ="p-3 text-left">Condutor</th>
-                            < th className ="p-3 text-left">Entrada</th>
-                                < th className ="p-3 text-left">Saída</th>
+    <div className=\"bg-white rounded-lg shadow overflow-x-auto\">
+      < table className =\"min-w-full text-sm\">
+        < thead className =\"bg-gray-50 border-b\">
+          < tr >
+          <th className=\"p-3 text-left\">Data</th>
+            < th className =\"p-3 text-left\">Tipo</th>
+              < th className =\"p-3 text-left\">Veículo</th>
+                < th className =\"p-3 text-left\">Condutor</th>
+                  < th className =\"p-3 text-left\">Destino</th>
+                    < th className =\"p-3 text-left\">Funcionário</th>
             </tr >
           </thead >
-          <tbody>
-            {events.map(e => (
-              <tr key={e.id} className="border-b hover:bg-gray-50">
-                <td className="p-3 font-medium">{e.plate}</td>
-                <td className="p-3">{e.driver_name}</td>
-        < td className ="p-3">{new Date(e.entry_at).toLocaleString('pt-BR')}</td>
-            < td className ="p-3">
-    {
-        e.exit_at ? new Date(e.exit_at).toLocaleString('pt-BR') : <span className="text-green-600 font-bold">No Pátio</span>}
+    <tbody>
+      {loading ? <tr><td colSpan=\"6\" className=\"p-4 text-center\">Carregando...</td></tr> :
+  movements.length === 0 ? <tr><td colSpan=\"6\" className=\"p-4 text-center\">Sem registros no período.</td></tr > :
+  movements.map(m => (
+    <tr key={m.id} className=\"border-b hover:bg-gray-50\">
+  < td className =\"p-3\">{new Date(m.created_at).toLocaleString('pt-BR')}</td>
+  < td className = {`p-3 font-bold ${m.type === 'ENTRY' ? 'text-green-600' : 'text-orange-600'}`}>
+    { m.type === 'ENTRY' ? 'ENTRADA' : 'SAÍDA' }
+                </td >
+  <td className=\"p-3 font-medium\">{m.vehicle_code}</td>
+    < td className =\"p-3\">{m.driver_name}</td>
+      < td className =\"p-3\">{m.destination || '-'}</td>
+        < td className =\"p-3 text-xs text-gray-500\">
+{ m.created_by_user?.full_name }<br/>
+                  <span className=\"opacity-75\">{m.created_by_user?.rg5}</span>
                 </td >
               </tr >
-            ))
-    }
+            ))}
           </tbody >
         </table >
       </div >
