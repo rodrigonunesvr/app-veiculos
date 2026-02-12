@@ -38,7 +38,8 @@ export default function Entry() {
         try {
             // Validation Check (Audit)
             if (staffName.length < 3) throw new Error('Nome do militar deve ter no mínimo 3 letras.')
-            if (!/^\\d{5}$/.test(staffRg)) throw new Error('RG do militar deve ter exatamente 5 dígitos.')
+            if (!/^\d{5,12}$/.test(staffRg)) throw new Error('RG do militar deve ter entre 5 e 12 dígitos.')
+
 
             // Check Active
             const { data: active } = await supabase
@@ -90,13 +91,13 @@ export default function Entry() {
     required
         />
         <Input
-            label="RG (5 dígitos)" 
-    value = { staffRg }
-    onChange = { e => setStaffRg(e.target.value.replace(/\\D/g, '').slice(0, 5)) }
-    placeholder ="12345"
-    maxLength = { 5}
-    required
-        />
+  label="RG (5 a 12 dígitos)"
+  value={staffRg}
+  onChange={(e) => setStaffRg(e.target.value.replace(/\D/g, '').slice(0, 12))}
+  placeholder="Somente números"
+  maxLength={12}
+  required
+/>
           </div >
         </div >
 

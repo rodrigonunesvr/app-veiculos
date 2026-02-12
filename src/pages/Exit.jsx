@@ -51,9 +51,10 @@ export default function Exit() {
         if (!finalDest) return alert('Informe o destino')
 
         // Audit Validation
-        if (staffName.length < 3 || !/^\\d{5}$/.test(staffRg)) {
-            return alert('Informe Nome (min 3) e RG (5 dígitos) do militar.')
-        }
+        if (staffName.length < 3 || !/^\d{5,12}$/.test(staffRg)) {
+  return alert('Informe Nome (min 3) e RG (5 a 12 dígitos) do militar.')
+}
+
 
         setLoading(true)
         try {
@@ -93,13 +94,14 @@ export default function Exit() {
         required
             />
             <Input
-                label="RG (5 dígitos)" 
-        value = { staffRg }
-        onChange = { e => setStaffRg(e.target.value.replace(/\\D/g, '').slice(0, 5)) }
-        placeholder ="12345"
-        maxLength = { 5}
-        required
-            />
+  label="RG (5 a 12 dígitos)"
+  value={staffRg}
+  onChange={(e) => setStaffRg(e.target.value.replace(/\D/g, '').slice(0, 12))}
+  placeholder="Somente números"
+  maxLength={12}
+  required
+/>
+
             </div >
           </div >
 
