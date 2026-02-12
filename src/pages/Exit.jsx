@@ -106,11 +106,14 @@ export default function Exit() {
           </div >
 
             <Input
-                label="Placa / Prefixo" 
-        value = { vehicleCode }
-        onChange = { e => setVehicleCode(e.target.value.toUpperCase()) }
-        readOnly
-            />
+  label="Placa / Prefixo"
+  value={vehicleCode}
+  onChange={(e) =>
+    setVehicleCode(e.target.value.toUpperCase().replace(/\s/g, ''))
+  }
+  placeholder="ABSL-159 ou AAA5555"
+  required
+/>
             <Input
                 label="Condutor" 
         value = { driver }
