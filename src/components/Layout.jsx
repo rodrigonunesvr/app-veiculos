@@ -45,13 +45,17 @@ export default function Layout() {
       <header className="bg-white shadow px-4 py-3 flex justify-between items-center">
         <h1 className="font-bold text-lg text-blue-800">Controle Veículos</h1>
 
-        <button
-          onClick={handleSignOut}
-          className="text-gray-500 hover:text-red-500"
-          title="Sair"
-        >
-          <LogOut size={20} />
-        </button>
+        <header className="bg-white shadow px-4 py-3 flex justify-between items-center">
+  <h1 className="font-bold text-lg text-blue-800">Controle Veículos</h1>
+
+  <button
+    onClick={handleSignOut}
+    className="text-sm font-semibold text-red-600 border border-red-200 px-3 py-1 rounded hover:bg-red-50"
+  >
+    Sair
+  </button>
+</header>
+
       </header>
 
       <main className="flex-1 p-4 pb-20">
