@@ -148,3 +148,61 @@ export default function Admin() {
     </div >
   )
 }
+return (
+<div className="space-y-4">
+<div className="flex justify-between items-center">
+<h2 className="text-xl font-bold">Relatório (Admin)</h2>
+
+<div className="flex gap-2">
+<Button variant="outline" className="!w-auto" onClick={exportCSV}>
+Exportar CSV
+</Button>
+<Button variant="primary" className="!w-auto" onClick={exportPDF}>
+Exportar PDF
+</Button>
+</div>
+</div>
+
+{err && <div className="text-red-600 text-sm">{err}</div>}
+
+<div className="bg-white rounded-lg shadow overflow-x-auto">
+<table className="min-w-full text-sm">
+<thead className="bg-gray-50 border-b">
+<tr>
+<th className="p-3 text-left">Data/Hora</th>
+<th className="p-3 text-left">Direção</th>
+<th className="p-3 text-left">Tipo</th>
+<th className="p-3 text-left">Código</th>
+<th className="p-3 text-left">Condutor</th>
+<th className="p-3 text-left">Pedestre</th>
+<th className="p-3 text-left">Doc</th>
+<th className="p-3 text-left">Destino</th>
+<th className="p-3 text-left">Registrado por</th>
+</tr>
+</thead>
+<tbody>
+{formatted.map((r) => (
+<tr key={r.id} className="border-b hover:bg-gray-50">
+<td className="p-3">{r.when}</td>
+<td className="p-3 font-semibold">{r.direction}</td>
+<td className="p-3">{r.subjectType}</td>
+<td className="p-3 font-medium">{r.code}</td>
+<td className="p-3">{r.driver}</td>
+<td className="p-3">{r.personName}</td>
+<td className="p-3">{r.personDoc}</td>
+<td className="p-3">{r.destination}</td>
+<td className="p-3">{r.staff}</td>
+</tr>
+))}
+{formatted.length === 0 && (
+<tr>
+<td className="p-6 text-center text-gray-500" colSpan={9}>
+Sem registros.
+</td>
+</tr>
+)}
+</tbody>
+</table>
+</div>
+</div>
+);
