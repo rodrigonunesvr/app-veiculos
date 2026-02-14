@@ -9,6 +9,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [filterType, setFilterType] = useState('ALL') // ALL, VEHICLE, VTR, PEDESTRIAN
 
   useEffect(() => {
     const end = new Date()
@@ -22,13 +23,20 @@ export default function Admin() {
   const fetchMovements = async () => {
     setLoading(true)
     let query = supabase
-      .from('vehicle_movements')
-      .select('*') // No join needed anymore for Staff Name/RG (saved directly)
-      .order('created_at', { ascending: false })
+      .from('movements')
+      .select(`
+        *,
+        created_by_user:created_by (
+          full_name,
+          rg5
+        )
+      `)
+      .order('event_at', { ascending: false })
       .limit(500)
 
-    if (startDate) query = query.gte('created_at', startDate + 'T00:00:00')
-    if (endDate) query = query.lte('created_at', endDate + 'T23:59:59')
+    if (startDate) query = query.gte('event_at', startDate + 'T00:00:00')
+    if (endDate) query = query.lte('event_at', endDate + 'T23:59:59')
+    if (filterType !== 'ALL') query = query.eq('subject_type', filterType)
 
     const { data, error } = await query
     if (error) console.error(error)
@@ -39,81 +47,98 @@ export default function Admin() {
   const exportPDF = () => {
     const doc = new jsPDF()
 
-    doc.text("Relatório de Movimentação - Controle de Veículos (v2.2)", 14, 15)
+    doc.text(\"Relatório V3 - Controle de Acesso\", 14, 15)
     doc.setFontSize(10)
     doc.text(`Período: ${startDate} a ${endDate}`, 14, 22)
 
-    const tableColumn = ["Data/Hora", "Tipo", "Veículo", "Condutor", "Destino", "Militar (Audit)"]
+    const tableColumn = [\"Data/Hora\", \"Ação\", \"Tipo\", \"Identificação\", \"Condutor/Pedestre\", \"Destino\", \"Funcionário\"]
     const tableRows = []
 
     movements.forEach(m => {
-      const staffInfo = m.staff_name ? `${m.staff_name} (${m.staff_rg5})` : 'Sistema'
-      const movementData = [
-        new Date(m.created_at).toLocaleString('pt-BR'),
-        m.type === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
-        m.vehicle_code,
-        m.driver_name,
+      const staff = m.created_by_user ? `${m.created_by_user.full_name} (${m.created_by_user.rg5})` : 'Sistema'
+      const row = [
+        new Date(m.event_at).toLocaleString('pt-BR'),
+        m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
+        m.subject_type,
+        m.subject_code,
+        m.driver_name || m.person_name || '-',
         m.destination || '-',
-        staffInfo
+        staff
       ]
-      tableRows.push(movementData)
+      tableRows.push(row)
     })
 
     doc.autoTable({
       head: [tableColumn],
       body: tableRows,
       startY: 30,
+      styles: { fontSize: 8 }
     })
 
-    doc.save(`relatorio_veiculos_${startDate}_${endDate}.pdf`)
+    doc.save(`relatorio_v3_${startDate}.pdf`)
   }
 
   return (
-    <div className="space-y-4">
-      <div className ="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-lg shadow">
-        <div className ="flex gap-2 items-end">
-          <div >
-          <label className="block text-xs text-gray-500">Início</label>
-            < input type ="date" className="border p-1 rounded" value={startDate} onChange={e => setStartDate(e.target.value)} />
+    <div className=\"space-y-4 pb-20\">
+      < div className =\"flex flex-col gap-4 bg-white p-4 rounded-lg shadow\">
+  {/* Filters */ }
+  <div className=\"flex flex-wrap gap-2 items-end\">
+    < div >
+    <label className=\"block text-xs text-gray-500\">Início</label>
+      < input type =\"date\" className=\"border p-1 rounded\" value={startDate} onChange={e => setStartDate(e.target.value)} />
            </div >
            <div>
-             <label className="block text-xs text-gray-500">Fim</label>
-             <input type="date" className="border p-1 rounded" value={endDate} onChange={e => setEndDate(e.target.value)} />
+             <label className=\"block text-xs text-gray-500\">Fim</label>
+             <input type=\"date\" className=\"border p-1 rounded\" value={endDate} onChange={e => setEndDate(e.target.value)} />
            </div >
-    <Button className="!w-auto py-1" onClick={fetchMovements}>Filtrar</Button>
+           <div>
+             <label className=\"block text-xs text-gray-500\">Tipo</label>
+             <select className=\"border p-1 rounded\" value={filterType} onChange={e => setFilterType(e.target.value)}>
+    < option value =\"ALL\">Todos</option>
+      < option value =\"VEHICLE\">Veículo</option>
+        < option value =\"VTR\">Viatura</option>
+          < option value =\"PEDESTRIAN\">Pedestre</option>
+             </select >
+           </div >
+    <Button className=\"!w-auto py-1 px-3\" onClick={fetchMovements}>Filtrar</Button>
         </div >
-    <div className="flex gap-2">
-      < Button variant ="primary" className="!w-auto" onClick={exportPDF}>Exportar PDF</Button>
+
+    <div className=\"border-t pt-2\">
+      < Button variant =\"primary\" className=\"!w-auto\" onClick={exportPDF}>Exportar PDF Oficial</Button>
         </div >
       </div >
 
-    <div className="bg-white rounded-lg shadow overflow-x-auto">
-      < table className ="min-w-full text-sm">
-        < thead className ="bg-gray-50 border-b">
+    <div className=\"bg-white rounded-lg shadow overflow-x-auto\">
+      < table className =\"min-w-full text-sm\">
+        < thead className =\"bg-gray-50 border-b\">
           < tr >
-          <th className="p-3 text-left">Data</th>
-            < th className ="p-3 text-left">Tipo</th>
-              < th className ="p-3 text-left">Veículo</th>
-                < th className ="p-3 text-left">Condutor</th>
-                  < th className ="p-3 text-left">Destino</th>
-                    < th className ="p-3 text-left">Militar</th>
+          <th className=\"p-3 text-left\">Data</th>
+            < th className =\"p-3 text-left\">Ação</th>
+              < th className =\"p-3 text-left\">ID</th>
+                < th className =\"p-3 text-left\">Info</th>
+                  < th className =\"p-3 text-left\">Registrado Por</th>
             </tr >
           </thead >
-    <tbody>
-      {loading ? <tr><td colSpan="6" className="p-4 text-center">Carregando...</td></tr> :
-  movements.length === 0 ? <tr><td colSpan="6" className="p-4 text-center">Sem registros no período.</td></tr > :
-  movements.map(m => (
-    <tr key={m.id} className="border-b hover:bg-gray-50">
-  < td className ="p-3">{new Date(m.created_at).toLocaleString('pt-BR')}</td>
-  < td className = {`p-3 font-bold ${m.type === 'ENTRY' ? 'text-green-600' : 'text-orange-600'}`}>
-    { m.type === 'ENTRY' ? 'ENTRADA' : 'SAÍDA' }
+          <tbody>
+            {movements.map(m => (
+              <tr key={m.id} className=\"border-b hover:bg-gray-50\">
+                <td className=\"p-3\">{new Date(m.event_at).toLocaleString('pt-BR')}</td>
+                <td className=\"p-3\">
+    < span className = {`px-2 py-1 rounded text-xs font-bold ${m.direction === 'ENTRY' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`
+}>
+  { m.direction }
+                  </span >
                 </td >
-  <td className="p-3 font-medium">{m.vehicle_code}</td>
-    < td className ="p-3">{m.driver_name}</td>
-      < td className ="p-3">{m.destination || '-'}</td>
-        < td className ="p-3 text-xs text-gray-700 font-bold">
-{ m.staff_name }<br/>
-                  <span className="opacity-75 font-normal">RG: {m.staff_rg5}</span>
+  <td className=\"p-3\">
+    < p className =\"font-bold\">{m.subject_code}</p>
+      < p className =\"text-xs text-gray-500\">{m.subject_type}</p>
+                </td >
+  <td className=\"p-3\">
+    < p > { m.driver_name || m.person_name }</p >
+      <p className=\"text-xs text-gray-500\">Dst: {m.destination}</p>
+                </td >
+  <td className=\"p-3 text-xs\">
+{ m.created_by_user?.full_name }
                 </td >
               </tr >
             ))}

@@ -1,150 +1,204 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 import Input from '../components/Input'
 import Button from '../components/Button'
+import TypeSelector from '../components/TypeSelector'
+import ConfirmationModal from '../components/ConfirmationModal'
 
 const DESTINATIONS = [
     '7º GBM', 'SOCORRO', 'CSM', 'ESTAFETA', 'ODONTO.', 'CRSI', 'MANUTENÇÃO', 'OUTROS'
 ]
 
 export default function Entry() {
-    const [vehicleCode, setVehicleCode] = useState('')
-    const [driver, setDriver] = useState('')
-    const [destination, setDestination] = useState(DESTINATIONS[0])
-    const [destinationOther, setDestinationOther] = useState('')
-
-    // Audit Fields (v2.2)
-    const [staffName, setStaffName] = useState('')
-    const [staffRg, setStaffRg] = useState('')
-
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState('')
+    const { profile } = useAuth()
     const navigate = useNavigate()
 
+    // State
+    const [type, setType] = useState('VEHICLE') // VEHICLE | VTR | PEDESTRIAN
+    const [data, setData] = useState({
+        code: '', // Placa, VTR Code, or Person Doc
+        driver: '', // Driver (Vehicle) or Person Name (Pedestrian)
+        destination: DESTINATIONS[0],
+        destOther: ''
+    })
+
+    // VTR Catalog
+    const [vtrList, setVtrList] = useState([])
+
+    // UI
+    const [confirming, setConfirming] = useState(false)
+    const [loading, setLoading] = useState(false)
+
+    useEffect(() => {
+        supabase.from('vtr_catalog').select('code').then(({ data }) => setVtrList(data || []))
+    }, [])
+
+    const handleChange = (field, value) => setData(prev => ({ ...prev, [field]: value }))
+
+    // Auto-complete driver for Vehicle only
     const handleBlur = async () => {
-        if (vehicleCode.length < 3) return
-        const { data } = await supabase.from('vehicles').select('last_driver').eq('plate', vehicleCode).single()
-        if (data?.last_driver) {
-            setDriver(data.last_driver)
+        if (type === 'VEHICLE' && data.code.length > 3) {
+            const { data: log } = await supabase.from('movements')
+                .select('driver_name')
+                .eq('subject_code', data.code)
+                .eq('subject_type', 'VEHICLE')
+                .limit(1)
+                .order('event_at', { ascending: false })
+                .maybeSingle()
+            if (log?.driver_name) handleChange('driver', log.driver_name)
         }
     }
 
-    const handleSubmit = async (e) => {
+    const validate = () => {
+        if (!data.code) return 'Preencha a identificação (Placa/VTR/Doc).'
+        if (type === 'VEHICLE' && !data.driver) return 'Nome do condutor obrigatório.'
+        if (type === 'PEDESTRIAN' && !data.driver) return 'Nome do pedestre obrigatório.'
+        if (data.destination === 'OUTROS' && !data.destOther) return 'Informe o destino.'
+        return null
+    }
+
+    const handlePreSubmit = (e) => {
         e.preventDefault()
+        const err = validate()
+        if (err) return alert(err)
+        setConfirming(true)
+    }
+
+    const handleConfirm = async () => {
         setLoading(true)
-        setError('')
-
         try {
-            // Validation Check (Audit)
-            if (staffName.length < 3) throw new Error('Nome do militar deve ter no mínimo 3 letras.')
-            if (!/^\d{5,12}$/.test(staffRg)) throw new Error('RG do militar deve ter entre 5 e 12 dígitos.')
+            const finalDest = data.destination === 'OUTROS' ? data.destOther : data.destination
 
-
-            // Check Active
-            const { data: active } = await supabase
-                .from('active_vehicles')
-                .select('id')
-                .eq('vehicle_code', vehicleCode)
-                .eq('type', 'ENTRY')
-                .single()
-
-            if (active) throw new Error('Veículo já consta como DENTRO.')
-
-            const finalDest = destination === 'OUTROS' ? destinationOther : destination
-            if (!finalDest) throw new Error('Informe o destino.')
-
-            const { error: insertError } = await supabase.from('vehicle_movements').insert({
-                vehicle_code: vehicleCode,
-                driver_name: driver,
+            const payload = {
+                direction: 'ENTRY',
+                subject_type: type,
+                subject_code: data.code,
                 destination: finalDest,
-                type: 'ENTRY',
-                staff_name: staffName,
-                staff_rg5: staffRg
-            })
+                // Map fields based on type
+                driver_name: type === 'VEHICLE' ? data.driver : null,
+                person_name: type === 'PEDESTRIAN' ? data.driver : null, // Reusing driver field for name in UI state
+                person_doc: type === 'PEDESTRIAN' ? data.code : null, // Code is Doc for Pedestrian
+            }
 
-            if (insertError) throw insertError
+            // If Pedestrian, subject_code usually implies ID. Let's strictly follow schema:
+            // Schema: subject_code text. 
+            // For Pedestrian: subject_code = DOC is good practice for uniqueness in views.
 
-            await supabase.from('vehicles').upsert({ plate: vehicleCode, last_driver: driver })
+            const { error } = await supabase.from('movements').insert(payload)
+            if (error) throw error
 
             navigate('/')
         } catch (err) {
-            console.error(err)
-            setError(err.message || 'Erro ao registrar entrada.')
+            alert('Erro: ' + err.message)
+            setConfirming(false)
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
-            < h2 className ="text-xl font-bold mb-4 text-green-700">Registrar Entrada</h2>
-                < form onSubmit = { handleSubmit } >
-                    <div className="bg-green-50 p-3 rounded mb-4 border border-green-200">
-                        < p className ="text-xs font-bold text-green-800 uppercase mb-2">Quem está registrando?</p>
-                            <div className ="grid grid-cols-2 gap-2">
-                                < Input
-    label ="Militar (Nome)" 
-    value = { staffName }
-    onChange = { e => setStaffName(e.target.value) }
-    placeholder ="Sd Fulano"
-    required
-        />
-        <Input
-  label="RG (5 a 12 dígitos)"
-  value={staffRg}
-  onChange={(e) => setStaffRg(e.target.value.replace(/\D/g, '').slice(0, 12))}
-  placeholder="Somente números"
-  maxLength={12}
-  required
-/>
-          </div >
-        </div >
+        <div className=\"max-w-md mx-auto bg-white p-6 rounded-lg shadow pb-24\">
+            < h2 className =\"text-xl font-bold mb-4 text-green-700\">Registrar Entrada</h2>
 
-        <Input
-            label="Placa / Prefixo" 
-    value = { vehicleCode }
-    onChange = { e => setVehicleCode(e.target.value.toUpperCase().replace(/\\s/g, '')) }
-    onBlur = { handleBlur }
-    placeholder ="ABC-1234"
-    required
-        />
-        <Input
-            label="Condutor" 
-    value = { driver }
-    onChange = { e => setDriver(e.target.value) }
-    required
-        />
+                < TypeSelector value = { type } onChange = {(t) => { setType(t); setData(d => ({ ...d, code: '', driver: '' })) }
+} />
 
-        <div className="mb-3">
-            < label className ="block text-sm font-medium text-gray-700 mb-1">Destino</label>
-                < select
-    className ="w-full p-2 border rounded-md border-gray-300"
-    value = { destination }
-    onChange = { e => setDestination(e.target.value) }
-        >
-        { DESTINATIONS.map(d => <option key={d} value={d}>{d}</option>) }
-          </select >
-        </div >
-
-        { destination === 'OUTROS' && (
+    < form onSubmit = { handlePreSubmit } >
+        {/* VEHICLE INPUTS */ }
+{
+    type === 'VEHICLE' && (
+        <>
             <Input
-                label="Qual destino?" 
-    value = { destinationOther }
-    onChange = { e => setDestinationOther(e.target.value) }
-    required
-    placeholder ="Digite o destino..."
-        />
+                label=\"Placa\"
+            value={data.code}
+            onChange={e => handleChange('code', e.target.value.toUpperCase().replace(/\\s/g, ''))}
+            onBlur={handleBlur}
+            placeholder=\"ABC-1234\"
+            />
+            <Input
+                label=\"Condutor\"
+            value={data.driver}
+            onChange={e => handleChange('driver', e.target.value)} 
+            />
+        </>
+    )
+}
+
+{/* VTR INPUTS */ }
+{
+    type === 'VTR' && (
+        <div className=\"mb-3\">
+            < label className =\"block text-sm font-medium text-gray-700 mb-1\">Selecione a Viatura</label>
+                < select
+    className =\"w-full p-2 border rounded-md\"
+    value = { data.code }
+    onChange = { e => handleChange('code', e.target.value) }
+        >
+        <option value=\"\">-- Selecione --</option>
+    { vtrList.map(v => <option key={v.code} value={v.code}>{v.code}</option>) }
+            </select >
+          </div >
         )
 }
 
+{/* PEDESTRIAN INPUTS */ }
 {
-    error && <p className="text-red-500 mb-3 text-sm">{error}</p>}
-        <div className ="flex gap-2">
-            < Button variant ="secondary" onClick={() => navigate('/')}>Cancelar</Button>
-                < Button type ="submit" variant="primary" loading={loading}>Confirmar Entrada</Button>
+    type === 'PEDESTRIAN' && (
+        <>
+            <Input
+                label=\"Nome Completo\"
+            value={data.driver} // storing name in driver state
+            onChange={e => handleChange('driver', e.target.value)} 
+            />
+            <Input
+                label=\"Documento (RG/CPF)\"
+            value={data.code}
+            onChange={e => handleChange('code', e.target.value)} 
+            />
+        </>
+    )
+}
+
+{/* DESTINATION (ALL) */ }
+<div className=\"mb-3\">
+    < label className =\"block text-sm font-medium text-gray-700 mb-1\">Destino</label>
+        < select
+className =\"w-full p-2 border rounded-md\"
+value = { data.destination }
+onChange = { e => handleChange('destination', e.target.value) }
+    >
+    { DESTINATIONS.map(d => <option key={d} value={d}>{d}</option>) }
+          </select >
         </div >
+{
+    data.destination === 'OUTROS' && (
+        <Input
+            label=\"Qual destino?\" 
+            value = { data.destOther } 
+            onChange={ e => handleChange('destOther', e.target.value) }
+    />
+        )
+}
+
+    < Button type =\"submit\" variant=\"primary\" className=\"mt-4\">Continuar</Button>
       </form >
+
+    <ConfirmationModal
+        show={confirming}
+        onClose={() => setConfirming(false)}
+        onConfirm={handleConfirm}
+        loading={loading}
+        data={{
+            type: 'ENTRY',
+            subject_type: type,
+            subject_code: data.code,
+            driver_name: data.driver,
+            destination: data.destination === 'OUTROS' ? data.destOther : data.destination,
+            staff_name: profile?.full_name + ' (' + profile?.rg5 + ')'
+        }}
+    />
     </div >
   )
 }
