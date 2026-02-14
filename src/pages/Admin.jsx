@@ -1,208 +1,128 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
-import Button from '../components/Button'
-import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import Button from '../components/Button';
 
 export default function Admin() {
-  const [movements, setMovements] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [filterType, setFilterType] = useState('ALL') // ALL, VEHICLE, VTR, PEDESTRIAN
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
 
   useEffect(() => {
-    const end = new Date()
-    const start = new Date()
-    start.setDate(end.getDate() - 7)
-    setStartDate(start.toISOString().split('T')[0])
-    setEndDate(end.toISOString().split('T')[0])
-    fetchMovements()
-  }, [])
+    const run = async () => {
+      setLoading(true);
+      setErr('');
 
-  const fetchMovements = async () => {
-    setLoading(true)
-    let query = supabase
-      .from('movements')
-      .select(`
-        *,
-        created_by_user:created_by (
-          full_name,
-          rg5
-        )
-      `)
-      .order('event_at', { ascending: false })
-      .limit(500)
+      const { data, error } = await supabase
+        .from('movements_report')
+        .select('*')
+        .order('event_at', { ascending: false })
+        .limit(500);
 
-    if (startDate) query = query.gte('event_at', startDate + 'T00:00:00')
-    if (endDate) query = query.lte('event_at', endDate + 'T23:59:59')
-    if (filterType !== 'ALL') query = query.eq('subject_type', filterType)
+      if (error) {
+        console.error(error);
+        setErr('Erro ao carregar relatório.');
+        setRows([]);
+      } else {
+        setRows(data || []);
+      }
 
-    const { data, error } = await query
-    if (error) console.error(error)
-    setMovements(data || [])
-    setLoading(false)
-  }
+      setLoading(false);
+    };
 
-  const exportPDF = () => {
-    const doc = new jsPDF()
+    run();
+  }, []);
 
-    doc.text("Relatório V3 - Controle de Acesso", 14, 15)
-    doc.setFontSize(10)
-    doc.text(`Período: ${startDate} a ${endDate}`, 14, 22)
+  const exportCSV = () => {
+    if (!rows.length) return;
 
-    const tableColumn = ["Data/Hora", "Ação", "Tipo", "Identificação", "Condutor/Pedestre", "Destino", "Funcionário"]
-    const tableRows = []
+    const headers = [
+      'Data/Hora',
+      'Direção',
+      'Tipo',
+      'Código',
+      'Condutor',
+      'Pedestre Nome',
+      'Pedestre Doc',
+      'Destino',
+      'Registrado por',
+    ];
 
-    movements.forEach(m => {
-      const staff = m.created_by_user ? `${m.created_by_user.full_name} (${m.created_by_user.rg5})` : 'Sistema'
-      const row = [
-        new Date(m.event_at).toLocaleString('pt-BR'),
-        m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
-        m.subject_type,
-        m.subject_code,
-        m.driver_name || m.person_name || '-',
-        m.destination || '-',
-        staff
-      ]
-      tableRows.push(row)
-    })
+    const lines = [
+      headers.join(','),
+      ...rows.map((r) => {
+        const when = r.event_at ? new Date(r.event_at).toLocaleString('pt-BR') : '';
+        const direction = r.direction || r.type || '';
+        const subjectType = r.subject_type || '';
+        const code = r.subject_code || r.vehicle_code || r.plate || '';
+        const driver = r.driver_name || '';
+        const personName = r.person_name || '';
+        const personDoc = r.person_doc || '';
+        const destination = r.destination || '';
+        const staff = `${r.staff_full_name || ''} (${r.staff_rg || ''})`;
 
-    doc.autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 30,
-      styles: { fontSize: 8 }
-    })
+        const row = [when, direction, subjectType, code, driver, personName, personDoc, destination, staff];
+        return row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',');
+      }),
+    ].join('\n');
 
-    doc.save(`relatorio_v3_${startDate}.pdf`)
-  }
+    const blob = new Blob([lines], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'relatorio.csv';
+    link.click();
+  };
 
+  if (loading) return <div className="p-4 text-center">Carregando...</div>;
   return (
-    <div className="space-y-4 pb-20">
-      <div className ="flex flex-col gap-4 bg-white p-4 rounded-lg shadow">
-  {/* Filters */ }
-  <div className="flex flex-wrap gap-2 items-end">
-    <div >
-    <label className="block text-xs text-gray-500">Início</label>
-      < input type ="date" className="border p-1 rounded" value={startDate} onChange={e => setStartDate(e.target.value)} />
-           </div >
-           <div>
-             <label className="block text-xs text-gray-500">Fim</label>
-             <input type="date" className="border p-1 rounded" value={endDate} onChange={e => setEndDate(e.target.value)} />
-           </div >
-           <div>
-             <label className="block text-xs text-gray-500">Tipo</label>
-             <select className="border p-1 rounded" value={filterType} onChange={e => setFilterType(e.target.value)}>
-    < option value ="ALL">Todos</option>
-      < option value ="VEHICLE">Veículo</option>
-        < option value ="VTR">Viatura</option>
-          < option value ="PEDESTRIAN">Pedestre</option>
-             </select >
-           </div >
-    <Button className="!w-auto py-1 px-3" onClick={fetchMovements}>Filtrar</Button>
-        </div >
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold">Relatório (Admin)</h2>
 
-    <div className="border-t pt-2">
-      < Button variant ="primary" className="!w-auto" onClick={exportPDF}>Exportar PDF Oficial</Button>
-        </div >
-      </div >
+        <Button variant="outline" className="!w-auto" onClick={exportCSV}>
+          Exportar CSV
+        </Button>
+      </div>
 
-    <div className="bg-white rounded-lg shadow overflow-x-auto">
-      < table className ="min-w-full text-sm">
-        < thead className ="bg-gray-50 border-b">
-          < tr >
-          <th className="p-3 text-left">Data</th>
-            < th className ="p-3 text-left">Ação</th>
-              < th className ="p-3 text-left">ID</th>
-                < th className ="p-3 text-left">Info</th>
-                  < th className ="p-3 text-left">Registrado Por</th>
-            </tr >
-          </thead >
+      {err && <div className="text-red-600 text-sm">{err}</div>}
+
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              <th className="p-3 text-left">Data/Hora</th>
+              <th className="p-3 text-left">Direção</th>
+              <th className="p-3 text-left">Tipo</th>
+              <th className="p-3 text-left">Código</th>
+              <th className="p-3 text-left">Destino</th>
+              <th className="p-3 text-left">Registrado por</th>
+            </tr>
+          </thead>
           <tbody>
-            {movements.map(m => (
-              <tr key={m.id} className="border-b hover:bg-gray-50">
-                <td className="p-3">{new Date(m.event_at).toLocaleString('pt-BR')}</td>
+            {rows.map((r) => (
+              <tr key={r.id} className="border-b hover:bg-gray-50">
                 <td className="p-3">
-    < span className = {`px-2 py-1 rounded text-xs font-bold ${m.direction === 'ENTRY' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`
-}>
-  { m.direction }
-                  </span >
-                </td >
-  <td className="p-3">
-    < p className ="font-bold">{m.subject_code}</p>
-      < p className ="text-xs text-gray-500">{m.subject_type}</p>
-                </td >
-  <td className="p-3">
-    < p > { m.driver_name || m.person_name }</p >
-      <p className="text-xs text-gray-500">Dst: {m.destination}</p>
-                </td >
-  <td className="p-3 text-xs">
-{ m.created_by_user?.full_name }
-                </td >
-              </tr >
+                  {r.event_at ? new Date(r.event_at).toLocaleString('pt-BR') : ''}
+                </td>
+                <td className="p-3 font-semibold">{r.direction || r.type}</td>
+                <td className="p-3">{r.subject_type}</td>
+                <td className="p-3 font-medium">{r.subject_code}</td>
+                <td className="p-3">{r.destination}</td>
+                <td className="p-3">
+                  {(r.staff_full_name || '-') + ' (' + (r.staff_rg || '-') + ')'}
+                </td>
+              </tr>
             ))}
-          </tbody >
-        </table >
-      </div >
-    </div >
-  )
+
+            {rows.length === 0 && (
+              <tr>
+                <td className="p-6 text-center text-gray-500" colSpan={6}>
+                  Sem registros.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
-return (
-<div className="space-y-4">
-<div className="flex justify-between items-center">
-<h2 className="text-xl font-bold">Relatório (Admin)</h2>
-
-<div className="flex gap-2">
-<Button variant="outline" className="!w-auto" onClick={exportCSV}>
-Exportar CSV
-</Button>
-<Button variant="primary" className="!w-auto" onClick={exportPDF}>
-Exportar PDF
-</Button>
-</div>
-</div>
-
-{err && <div className="text-red-600 text-sm">{err}</div>}
-
-<div className="bg-white rounded-lg shadow overflow-x-auto">
-<table className="min-w-full text-sm">
-<thead className="bg-gray-50 border-b">
-<tr>
-<th className="p-3 text-left">Data/Hora</th>
-<th className="p-3 text-left">Direção</th>
-<th className="p-3 text-left">Tipo</th>
-<th className="p-3 text-left">Código</th>
-<th className="p-3 text-left">Condutor</th>
-<th className="p-3 text-left">Pedestre</th>
-<th className="p-3 text-left">Doc</th>
-<th className="p-3 text-left">Destino</th>
-<th className="p-3 text-left">Registrado por</th>
-</tr>
-</thead>
-<tbody>
-{formatted.map((r) => (
-<tr key={r.id} className="border-b hover:bg-gray-50">
-<td className="p-3">{r.when}</td>
-<td className="p-3 font-semibold">{r.direction}</td>
-<td className="p-3">{r.subjectType}</td>
-<td className="p-3 font-medium">{r.code}</td>
-<td className="p-3">{r.driver}</td>
-<td className="p-3">{r.personName}</td>
-<td className="p-3">{r.personDoc}</td>
-<td className="p-3">{r.destination}</td>
-<td className="p-3">{r.staff}</td>
-</tr>
-))}
-{formatted.length === 0 && (
-<tr>
-<td className="p-6 text-center text-gray-500" colSpan={9}>
-Sem registros.
-</td>
-</tr>
-)}
-</tbody>
-</table>
-</div>
-</div>
-);
