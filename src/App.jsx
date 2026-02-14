@@ -16,23 +16,23 @@ export default function App() {
             <BrowserRouter>
                 <Routes>
                     {/* Auth Routes */}
-                    <Route path=\"/login\" element={<Login />} />
-                    <Route path=\"/signup\" element={<SignUp />} />
-                    <Route path=\"/forgot-password\" element={<ForgotPassword />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
 
                     {/* Setup Route */}
-                    <Route path=\"/profile-setup\" element={<ProfileSetup />} />
+                    <Route path="/profile-setup" element={<ProfileSetup />} />
 
                     {/* Protected Main App Routes */}
                     <Route element={<Layout />}>
-                        <Route path=\"/\" element={<Home />} />
-                        <Route path=\"/entry\" element={<Entry />} />
-                        <Route path=\"/exit\" element={<Exit />} />
-                        <Route path=\"/admin\" element={<Admin />} />
+                        <Route path="/" element={<Home />} />
+                        <Route path="/entry" element={<Entry />} />
+                        <Route path="/exit" element={<Exit />} />
+                        <Route path="/admin" element={<Admin />} />
                     </Route>
 
                     {/* Fallback */}
-                    <Route path=\"*\" element={<Navigate to=\"/\" replace />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </BrowserRouter>
         </AuthProvider>

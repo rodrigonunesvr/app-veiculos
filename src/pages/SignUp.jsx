@@ -53,43 +53,43 @@ export default function SignUp() {
     }
 
     return (
-        <div className=\"min-h-screen flex items-center justify-center p-4 bg-gray-100\">
-            < div className =\"bg-white p-6 rounded-lg shadow-md w-full max-w-sm\">
-                < h2 className =\"text-2xl font-bold mb-6 text-center text-blue-800\">Criar Conta</h2>
+        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
+            <div className ="bg-white p-6 rounded-lg shadow-md w-full max-w-sm">
+                < h2 className ="text-2xl font-bold mb-6 text-center text-blue-800">Criar Conta</h2>
                     < form onSubmit = { handleSubmit } >
                         <Input
-                            label=\"Nome Completo\" 
+                            label="Nome Completo" 
     value = { fullName }
     onChange = { e => setFullName(e.target.value) }
     required
         />
         <Input
-            label=\"E-mail\" 
-    type =\"email\"
+            label="E-mail" 
+    type ="email"
     value = { email }
     onChange = { e => setEmail(e.target.value) }
     required
         />
         <Input
-            label=\"RG (apenas números)\" 
+            label="RG (apenas números)" 
     value = { rg }
     onChange = { e => setRg(e.target.value.replace(/\\D/g, '').slice(0, 12)) }
     required
         />
         <Input
-            label=\"Senha\" 
-    type =\"password\" 
+            label="Senha" 
+    type ="password" 
     value = { password }
     onChange = { e => setPassword(e.target.value) }
     required
         />
 
-        { error && <p className=\"text-red-500 text-sm mb-3\">{error}</p>}
+        { error && <p className="text-red-500 text-sm mb-3">{error}</p>}
 
-            < Button type =\"submit\" loading={loading}>Cadastrar</Button>
+            < Button type ="submit" loading={loading}>Cadastrar</Button>
 
-                < div className =\"mt-4 text-center text-sm\">
-                    < Link to =\"/login\" className=\"text-blue-600 hover:underline\">Já tenho conta</Link>
+                <div className ="mt-4 text-center text-sm">
+                    < Link to ="/login" className="text-blue-600 hover:underline">Já tenho conta</Link>
           </div >
         </form >
       </div >

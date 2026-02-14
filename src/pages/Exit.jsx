@@ -90,9 +90,9 @@ export default function Exit() {
     )
 
     return (
-        <div className=\"max-w-md mx-auto pb-24\">
-            < div className =\"bg-white p-6 rounded-lg shadow mb-6\">
-                < h2 className =\"text-xl font-bold mb-4 text-orange-700\">Registrar Saída</h2>
+        <div className="max-w-md mx-auto pb-24">
+            <div className ="bg-white p-6 rounded-lg shadow mb-6">
+                < h2 className ="text-xl font-bold mb-4 text-orange-700">Registrar Saída</h2>
 
                     < TypeSelector value = { type } onChange = { setType } />
         
@@ -110,10 +110,10 @@ export default function Exit() {
           />
            
            {/* Destination on Exit too per requirements */}
-           <div className=\"mb-3\">
-            <label className=\"block text-sm font-medium text-gray-700 mb-1\">Destino</label>
+           <div className="mb-3">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Destino</label>
             <select 
-              className=\"w-full p-2 border rounded-md\"
+              className="w-full p-2 border rounded-md"
     value = { data.destination }
     onChange = { e => handleChange('destination', e.target.value) }
         >
@@ -123,40 +123,40 @@ export default function Exit() {
     {
         data.destination === 'OUTROS' && (
             <Input
-                label=\"Qual destino?\" 
+                label="Qual destino?" 
               value = { data.destOther } 
               onChange={ e => handleChange('destOther', e.target.value) }
         />
           )
     }
 
-        < Button type =\"submit\" variant=\"danger\" className=\"mt-2\">Registrar Saída</Button>
+        < Button type ="submit" variant="danger" className="mt-2">Registrar Saída</Button>
         </form >
       </div >
 
         {/* List for Quick Selection */ }
-        < div className =\"bg-white p-4 rounded-lg shadow\">
-            < h3 className =\"font-bold mb-2 text-gray-700 text-sm uppercase\">Selecionar de quem está DENTRO</h3>
+        <div className ="bg-white p-4 rounded-lg shadow">
+            < h3 className ="font-bold mb-2 text-gray-700 text-sm uppercase">Selecionar de quem está DENTRO</h3>
                 < Input
-    placeholder =\"Buscar...\" 
+    placeholder ="Buscar..." 
     value = { search }
     onChange = { e => setSearch(e.target.value) }
-    className =\"mb-2\"
+    className ="mb-2"
         />
-        <div className=\"space-y-2 max-h-60 overflow-y-auto\">
+        <div className="space-y-2 max-h-60 overflow-y-auto">
     {
         filteredList.map(item => (
-            <div key={item.id} className=\"flex justify-between items-center p-2 border rounded hover:bg-gray-50 cursor-pointer\" onClick={() => handleSelectFromList(item)}>
-            < div >
-        <p className=\"font-bold\">{item.subject_code}</p>
-        < p className =\"text-xs text-gray-500\">{item.subject_type}</p>
+            <div key={item.id} className="flex justify-between items-center p-2 border rounded hover:bg-gray-50 cursor-pointer" onClick={() => handleSelectFromList(item)}>
+            <div >
+        <p className="font-bold">{item.subject_code}</p>
+        < p className ="text-xs text-gray-500">{item.subject_type}</p>
                </div >
-            <span className=\"text-xs bg-gray-200 px-2 py-1 rounded\">Selecionar</span>
+            <span className="text-xs bg-gray-200 px-2 py-1 rounded">Selecionar</span>
             </div >
           ))
     }
     {
-        filteredList.length === 0 && <p className=\"text-center text-gray-400 text-sm\">Nenhum registro encontrado.</p>}
+        filteredList.length === 0 && <p className="text-center text-gray-400 text-sm">Nenhum registro encontrado.</p>}
         </div >
       </div >
 

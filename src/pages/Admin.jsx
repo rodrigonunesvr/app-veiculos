@@ -47,11 +47,11 @@ export default function Admin() {
   const exportPDF = () => {
     const doc = new jsPDF()
 
-    doc.text(\"Relatório V3 - Controle de Acesso\", 14, 15)
+    doc.text("Relatório V3 - Controle de Acesso", 14, 15)
     doc.setFontSize(10)
     doc.text(`Período: ${startDate} a ${endDate}`, 14, 22)
 
-    const tableColumn = [\"Data/Hora\", \"Ação\", \"Tipo\", \"Identificação\", \"Condutor/Pedestre\", \"Destino\", \"Funcionário\"]
+    const tableColumn = ["Data/Hora", "Ação", "Tipo", "Identificação", "Condutor/Pedestre", "Destino", "Funcionário"]
     const tableRows = []
 
     movements.forEach(m => {
@@ -79,65 +79,65 @@ export default function Admin() {
   }
 
   return (
-    <div className=\"space-y-4 pb-20\">
-      < div className =\"flex flex-col gap-4 bg-white p-4 rounded-lg shadow\">
+    <div className="space-y-4 pb-20">
+      <div className ="flex flex-col gap-4 bg-white p-4 rounded-lg shadow">
   {/* Filters */ }
-  <div className=\"flex flex-wrap gap-2 items-end\">
-    < div >
-    <label className=\"block text-xs text-gray-500\">Início</label>
-      < input type =\"date\" className=\"border p-1 rounded\" value={startDate} onChange={e => setStartDate(e.target.value)} />
+  <div className="flex flex-wrap gap-2 items-end">
+    <div >
+    <label className="block text-xs text-gray-500">Início</label>
+      < input type ="date" className="border p-1 rounded" value={startDate} onChange={e => setStartDate(e.target.value)} />
            </div >
            <div>
-             <label className=\"block text-xs text-gray-500\">Fim</label>
-             <input type=\"date\" className=\"border p-1 rounded\" value={endDate} onChange={e => setEndDate(e.target.value)} />
+             <label className="block text-xs text-gray-500">Fim</label>
+             <input type="date" className="border p-1 rounded" value={endDate} onChange={e => setEndDate(e.target.value)} />
            </div >
            <div>
-             <label className=\"block text-xs text-gray-500\">Tipo</label>
-             <select className=\"border p-1 rounded\" value={filterType} onChange={e => setFilterType(e.target.value)}>
-    < option value =\"ALL\">Todos</option>
-      < option value =\"VEHICLE\">Veículo</option>
-        < option value =\"VTR\">Viatura</option>
-          < option value =\"PEDESTRIAN\">Pedestre</option>
+             <label className="block text-xs text-gray-500">Tipo</label>
+             <select className="border p-1 rounded" value={filterType} onChange={e => setFilterType(e.target.value)}>
+    < option value ="ALL">Todos</option>
+      < option value ="VEHICLE">Veículo</option>
+        < option value ="VTR">Viatura</option>
+          < option value ="PEDESTRIAN">Pedestre</option>
              </select >
            </div >
-    <Button className=\"!w-auto py-1 px-3\" onClick={fetchMovements}>Filtrar</Button>
+    <Button className="!w-auto py-1 px-3" onClick={fetchMovements}>Filtrar</Button>
         </div >
 
-    <div className=\"border-t pt-2\">
-      < Button variant =\"primary\" className=\"!w-auto\" onClick={exportPDF}>Exportar PDF Oficial</Button>
+    <div className="border-t pt-2">
+      < Button variant ="primary" className="!w-auto" onClick={exportPDF}>Exportar PDF Oficial</Button>
         </div >
       </div >
 
-    <div className=\"bg-white rounded-lg shadow overflow-x-auto\">
-      < table className =\"min-w-full text-sm\">
-        < thead className =\"bg-gray-50 border-b\">
+    <div className="bg-white rounded-lg shadow overflow-x-auto">
+      < table className ="min-w-full text-sm">
+        < thead className ="bg-gray-50 border-b">
           < tr >
-          <th className=\"p-3 text-left\">Data</th>
-            < th className =\"p-3 text-left\">Ação</th>
-              < th className =\"p-3 text-left\">ID</th>
-                < th className =\"p-3 text-left\">Info</th>
-                  < th className =\"p-3 text-left\">Registrado Por</th>
+          <th className="p-3 text-left">Data</th>
+            < th className ="p-3 text-left">Ação</th>
+              < th className ="p-3 text-left">ID</th>
+                < th className ="p-3 text-left">Info</th>
+                  < th className ="p-3 text-left">Registrado Por</th>
             </tr >
           </thead >
           <tbody>
             {movements.map(m => (
-              <tr key={m.id} className=\"border-b hover:bg-gray-50\">
-                <td className=\"p-3\">{new Date(m.event_at).toLocaleString('pt-BR')}</td>
-                <td className=\"p-3\">
+              <tr key={m.id} className="border-b hover:bg-gray-50">
+                <td className="p-3">{new Date(m.event_at).toLocaleString('pt-BR')}</td>
+                <td className="p-3">
     < span className = {`px-2 py-1 rounded text-xs font-bold ${m.direction === 'ENTRY' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`
 }>
   { m.direction }
                   </span >
                 </td >
-  <td className=\"p-3\">
-    < p className =\"font-bold\">{m.subject_code}</p>
-      < p className =\"text-xs text-gray-500\">{m.subject_type}</p>
+  <td className="p-3">
+    < p className ="font-bold">{m.subject_code}</p>
+      < p className ="text-xs text-gray-500">{m.subject_type}</p>
                 </td >
-  <td className=\"p-3\">
+  <td className="p-3">
     < p > { m.driver_name || m.person_name }</p >
-      <p className=\"text-xs text-gray-500\">Dst: {m.destination}</p>
+      <p className="text-xs text-gray-500">Dst: {m.destination}</p>
                 </td >
-  <td className=\"p-3 text-xs\">
+  <td className="p-3 text-xs">
 { m.created_by_user?.full_name }
                 </td >
               </tr >

@@ -6,12 +6,12 @@ export default function TypeSelector({ value, onChange }) {
     ]
 
     return (
-        <div className=\"flex gap-2 mb-4\">
+        <div className="flex gap-2 mb-4">
     {
         types.map(t => (
             <button
                 key={t.id}
-                type=\"button\"
+                type="button"
           onClick = {() => onChange(t.id)}
     className = {`flex-1 py-3 text-sm font-bold rounded-lg border-2 transition-all
             ${value === t.id
