@@ -32,44 +32,67 @@ export default function Admin() {
     run();
   }, []);
 
-  const exportCSV = () => {
+  const exportPDF = () => {
     if (!rows.length) return;
 
-    const headers = [
-      'Data/Hora',
-      'Direção',
-      'Tipo',
-      'Código',
-      'Condutor',
-      'Pedestre Nome',
-      'Pedestre Doc',
-      'Destino',
-      'Registrado por',
-    ];
+    const html = `
+      <html>
+        <head>
+          <title>Relatório de Movimentações</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; }
+            h1 { font-size: 18px; margin-bottom: 12px; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background: #f3f4f6; }
+            @page { size: A4 landscape; margin: 12mm; }
+          </style>
+        </head>
+        <body>
+          <h1>Relatório de Movimentações</h1>
+          <table>
+            <thead>
+              <tr>
+                <th>Data/Hora</th>
+                <th>Direção</th>
+                <th>Tipo</th>
+                <th>Código</th>
+                <th>Destino</th>
+                <th>Registrado por</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((r) => {
+                const when = r.event_at ? new Date(r.event_at).toLocaleString('pt-BR') : '';
+                const direction = (r.direction || r.type || '').toString();
+                const subjectType = (r.subject_type || '').toString();
+                const code = (r.subject_code || '').toString();
+                const destination = (r.destination || '').toString();
+                const staff = `${r.staff_full_name || '-'} (${r.staff_rg || '-'})`;
+                return `
+                  <tr>
+                    <td>${when}</td>
+                    <td>${direction}</td>
+                    <td>${subjectType}</td>
+                    <td>${code}</td>
+                    <td>${destination}</td>
+                    <td>${staff}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+          <script>
+            window.onload = () => window.print();
+          </script>
+        </body>
+      </html>
+    `;
 
-    const lines = [
-      headers.join(','),
-      ...rows.map((r) => {
-        const when = r.event_at ? new Date(r.event_at).toLocaleString('pt-BR') : '';
-        const direction = r.direction || r.type || '';
-        const subjectType = r.subject_type || '';
-        const code = r.subject_code || r.vehicle_code || r.plate || '';
-        const driver = r.driver_name || '';
-        const personName = r.person_name || '';
-        const personDoc = r.person_doc || '';
-        const destination = r.destination || '';
-        const staff = `${r.staff_full_name || ''} (${r.staff_rg || ''})`;
-
-        const row = [when, direction, subjectType, code, driver, personName, personDoc, destination, staff];
-        return row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',');
-      }),
-    ].join('\n');
-
-    const blob = new Blob([lines], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'relatorio.csv';
-    link.click();
+    const w = window.open('', '_blank');
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
   };
 
   if (loading) return <div className="p-4 text-center">Carregando...</div>;
@@ -78,8 +101,8 @@ export default function Admin() {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">Relatório (Admin)</h2>
 
-        <Button variant="outline" className="!w-auto" onClick={exportCSV}>
-          Exportar CSV
+        <Button variant="primary" className="!w-auto" onClick={exportPDF}>
+          Exportar PDF
         </Button>
       </div>
 
