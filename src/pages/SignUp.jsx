@@ -28,11 +28,11 @@ export default function SignUp() {
             if (authError) throw authError
 
             if (user) {
-                // 2. Create profile (Trigger might handle this, but let's be safe/explicit for v3 fields)
+                // 2. Create profile
                 const { error: profileError } = await supabase.from('profiles').upsert({
                     id: user.id,
                     full_name: fullName,
-                    rg5: rg, // keeping column name rg5 for compatibility or migration
+                    rg5: rg,
                     email: email,
                     role: 'staff'
                 })
@@ -41,8 +41,14 @@ export default function SignUp() {
                     console.error('Profile cleanup needed:', profileError)
                 }
 
-                // Redirect to Verification Page
-                navigate('/verification')
+                // CHECK: If confirmation is disabled, session is active immediately.
+                // Redirect to Home instead of Verification.
+                const { data: { session } } = await supabase.auth.getSession()
+                if (session) {
+                    navigate('/')
+                } else {
+                    navigate('/verification')
+                }
             }
         } catch (err) {
             setError(err.message)
@@ -53,46 +59,46 @@ export default function SignUp() {
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
-            < div className ="bg-white p-6 rounded-lg shadow-md w-full max-w-sm">
-                < h2 className ="text-2xl font-bold mb-6 text-center text-blue-800">Criar Conta</h2>
-                    < form onSubmit = { handleSubmit } >
-                        <Input
-                            label="Nome Completo" 
-    value = { fullName }
-    onChange = { e => setFullName(e.target.value) }
-    required
-        />
-        <Input
-            label="E-mail" 
-    type ="email"
-    value = { email }
-    onChange = { e => setEmail(e.target.value) }
-    required
-        />
-        <Input
-            label="RG (apenas números)" 
-    value = { rg }
-    onChange = { e => setRg(e.target.value.replace(/\\D/g, '').slice(0, 12)) }
-    required
-        />
-        <Input
-            label="Senha" 
-    type ="password" 
-    value = { password }
-    onChange = { e => setPassword(e.target.value) }
-    required
-        />
+            < div className="bg-white p-6 rounded-lg shadow-md w-full max-w-sm">
+                < h2 className="text-2xl font-bold mb-6 text-center text-blue-800">Criar Conta</h2>
+                < form onSubmit={handleSubmit} >
+                    <Input
+                        label="Nome Completo"
+                        value={fullName}
+                        onChange={e => setFullName(e.target.value)}
+                        required
+                    />
+                    <Input
+                        label="E-mail"
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        required
+                    />
+                    <Input
+                        label="RG (apenas números)"
+                        value={rg}
+                        onChange={e => setRg(e.target.value.replace(/\\D/g, '').slice(0, 12))}
+                        required
+                    />
+                    <Input
+                        label="Senha"
+                        type="password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        required
+                    />
 
-        { error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+                    {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
 
-            < Button type ="submit" loading={loading}>Cadastrar</Button>
+                    < Button type="submit" loading={loading}>Cadastrar</Button>
 
-                < div className ="mt-4 text-center text-sm">
-                    < Link to ="/login" className="text-blue-600 hover:underline">Já tenho conta</Link>
-          </div >
-        </form >
-      </div >
-    </div >
-  )
+                    < div className="mt-4 text-center text-sm">
+                        < Link to="/login" className="text-blue-600 hover:underline">Já tenho conta</Link>
+                    </div >
+                </form >
+            </div >
+        </div >
+    )
 }
 
