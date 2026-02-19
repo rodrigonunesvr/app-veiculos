@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import ForgotPassword from './pages/ForgotPassword'
 import Verification from './pages/Verification'
+import ResetPassword from './pages/ResetPassword'
 import ProfileSetup from './pages/ProfileSetup'
 import Home from './pages/Home'
 import Entry from './pages/Entry'
@@ -15,14 +16,14 @@ import Admin from './pages/Admin'
 function ErrorFallback({ error }) {
     return (
         <div className="p-6 text-center">
-            < h2 className ="text-red-600 font-bold mb-2">Algo deu errado</h2>
-                < p className ="text-sm text-gray-600 mb-4">{error?.message || 'Erro desconhecido'}</p>
-                    < button onClick = {() => window.location.href = '/'
-} className ="bg-blue-600 text-white px-4 py-2 rounded">
-Recarregar
-      </button >
-    </div >
-  )
+            < h2 className="text-red-600 font-bold mb-2">Algo deu errado</h2>
+            < p className="text-sm text-gray-600 mb-4">{error?.message || 'Erro desconhecido'}</p>
+            < button onClick={() => window.location.href = '/'
+            } className="bg-blue-600 text-white px-4 py-2 rounded">
+                Recarregar
+            </button >
+        </div >
+    )
 }
 
 // Protected Route Wrapper
@@ -45,6 +46,7 @@ export default function App() {
                     <Route path="/signup" element={<SignUp />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/verification" element={<Verification />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
 
                     {/* Setup */}
                     <Route path="/profile-setup" element={
