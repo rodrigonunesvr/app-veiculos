@@ -122,8 +122,8 @@ export default function Entry() {
     }
 
     return (
-        <div className=\"max-w-md mx-auto bg-white p-6 rounded-lg shadow pb-24\">
-            < h2 className =\"text-xl font-bold mb-4 text-green-700\">Registrar Entrada</h2>
+        <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow pb-24">
+            < h2 className ="text-xl font-bold mb-4 text-green-700">Registrar Entrada</h2>
 
                 < TypeSelector value = { type } onChange = {(t) => {
         setType(t);
@@ -138,14 +138,14 @@ export default function Entry() {
     type === 'VEHICLE' && (
         <>
             <Input
-                label=\"Placa\"
+                label="Placa"
             value={data.code}
             onChange={e => handleChange('code', e.target.value.toUpperCase().replace(/\\s/g, ''))}
             onBlur={handleBlur}
-            placeholder=\"ABC-1234\"
+            placeholder="ABC-1234"
             />
             <Input
-                label=\"Condutor\"
+                label="Condutor"
             value={data.driver}
             onChange={e => handleChange('driver', e.target.value)} 
             />
@@ -156,9 +156,9 @@ export default function Entry() {
 {/* VTR MULTI-SELECT */ }
 {
     type === 'VTR' && (
-        <div className=\"mb-3\">
-            < label className =\"block text-sm font-medium text-gray-700 mb-2\">Selecionar Viaturas ({selectedVtrs.length})</label>
-                < div className =\"grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border p-2 rounded bg-gray-50\">
+        <div className="mb-3">
+            < label className ="block text-sm font-medium text-gray-700 mb-2">Selecionar Viaturas ({selectedVtrs.length})</label>
+                < div className ="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border p-2 rounded bg-gray-50">
     {
         vtrList.map(v => (
             <div
@@ -183,12 +183,12 @@ export default function Entry() {
     type === 'PEDESTRIAN' && (
         <>
             <Input
-                label=\"Nome Completo\"
+                label="Nome Completo"
             value={data.driver}
             onChange={e => handleChange('driver', e.target.value)} 
             />
             <Input
-                label=\"Documento (RG/CPF)\"
+                label="Documento (RG/CPF)"
             value={data.code}
             onChange={e => handleChange('code', e.target.value)} 
             />
@@ -197,10 +197,10 @@ export default function Entry() {
 }
 
 {/* DESTINATION */ }
-<div className=\"mb-3\">
-    < label className =\"block text-sm font-medium text-gray-700 mb-1\">Destino</label>
+<div className="mb-3">
+    < label className ="block text-sm font-medium text-gray-700 mb-1">Destino</label>
         < select
-className =\"w-full p-2 border rounded-md\"
+className ="w-full p-2 border rounded-md"
 value = { data.destination }
 onChange = { e => handleChange('destination', e.target.value) }
     >
@@ -210,14 +210,14 @@ onChange = { e => handleChange('destination', e.target.value) }
 {
     data.destination === 'OUTROS' && (
         <Input
-            label=\"Qual destino?\" 
+            label="Qual destino?" 
             value = { data.destOther } 
             onChange={ e => handleChange('destOther', e.target.value) }
     />
         )
 }
 
-    < Button type =\"submit\" variant=\"primary\" className=\"mt-4\">Continuar</Button>
+    < Button type ="submit" variant="primary" className="mt-4">Continuar</Button>
       </form >
 
     <ConfirmationModal
@@ -237,3 +237,4 @@ onChange = { e => handleChange('destination', e.target.value) }
     </div >
   )
 }
+

@@ -14,11 +14,11 @@ import Admin from './pages/Admin'
 // Error Boundary Component
 function ErrorFallback({ error }) {
     return (
-        <div className=\"p-6 text-center\">
-            < h2 className =\"text-red-600 font-bold mb-2\">Algo deu errado</h2>
-                < p className =\"text-sm text-gray-600 mb-4\">{error?.message || 'Erro desconhecido'}</p>
+        <div className="p-6 text-center">
+            < h2 className ="text-red-600 font-bold mb-2">Algo deu errado</h2>
+                < p className ="text-sm text-gray-600 mb-4">{error?.message || 'Erro desconhecido'}</p>
                     < button onClick = {() => window.location.href = '/'
-} className =\"bg-blue-600 text-white px-4 py-2 rounded\">
+} className ="bg-blue-600 text-white px-4 py-2 rounded">
 Recarregar
       </button >
     </div >
@@ -29,8 +29,8 @@ Recarregar
 function ProtectedRoute({ children }) {
     const { user, loading } = useAuth()
 
-    if (loading) return <div className=\"p-10 text-center text-gray-500\">Carregando...</div>
-    if (!user) return <Navigate to=\"/login\" replace />
+    if (loading) return <div className="p-10 text-center text-gray-500">Carregando...</div>
+    if (!user) return <Navigate to="/login" replace />
 
     return children
 }
@@ -41,28 +41,29 @@ export default function App() {
             <BrowserRouter>
                 <Routes>
                     {/* Public Routes */}
-                    <Route path=\"/login\" element={<Login />} />
-                    <Route path=\"/signup\" element={<SignUp />} />
-                    <Route path=\"/forgot-password\" element={<ForgotPassword />} />
-                    <Route path=\"/verification\" element={<Verification />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/verification" element={<Verification />} />
 
                     {/* Setup */}
-                    <Route path=\"/profile-setup\" element={
+                    <Route path="/profile-setup" element={
                         <ProtectedRoute><ProfileSetup /></ProtectedRoute>
                     } />
 
                     {/* Protected Main App */}
                     <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                        <Route path=\"/\" element={<Home />} />
-                        <Route path=\"/entry\" element={<Entry />} />
-                        <Route path=\"/exit\" element={<Exit />} />
-                        <Route path=\"/admin\" element={<Admin />} />
+                        <Route path="/" element={<Home />} />
+                        <Route path="/entry" element={<Entry />} />
+                        <Route path="/exit" element={<Exit />} />
+                        <Route path="/admin" element={<Admin />} />
                     </Route>
 
                     {/* Fallback */}
-                    <Route path=\"*\" element={<Navigate to=\"/\" replace />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </BrowserRouter>
         </AuthProvider>
     )
 }
+
