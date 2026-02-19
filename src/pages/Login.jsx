@@ -22,33 +22,40 @@ export default function Login() {
             if (error) throw error
             navigate('/')
         } catch (err) {
-            setError('Falha no login. Verifique suas credenciais.')
+            console.error(err)
+            if (err.message && err.message.includes('Email not confirmed')) {
+                setError('E-mail não confirmado. Verifique sua caixa de entrada.')
+            } else if (err.message && err.message.includes('Invalid login credentials')) {
+                setError('E-mail ou senha incorretos.')
+            } else {
+                setError('Erro ao entrar. Tente novamente.')
+            }
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
-            <div className ="bg-white p-6 rounded-lg shadow-md w-full max-w-sm">
-                <h2 className ="text-2xl font-bold mb-6 text-center text-blue-800">Controle de Veículos</h2>
+        <div className=\"min-h-screen flex items-center justify-center p-4 bg-gray-100\">
+            < div className =\"bg-white p-6 rounded-lg shadow-md w-full max-w-sm\">
+                < h2 className =\"text-2xl font-bold mb-6 text-center text-blue-800\">Controle de Veículos</h2>
                     < form onSubmit = { handleSubmit } >
                         <Input
-                            label="E-mail" 
-    type ="email" 
+                            label=\"E-mail\" 
+    type =\"email\" 
     value = { email }
     onChange = { e => setEmail(e.target.value) }
     required
         />
         <Input
-            label="Senha" 
-    type ="password" 
+            label=\"Senha\" 
+    type =\"password\" 
     value = { password }
     onChange = { e => setPassword(e.target.value) }
     required
         />
-        { error && <div className="mb-4 text-red-600 text-sm text-center">{error}</div>}
-            < Button type ="submit" loading={loading}>Entrar</Button>
+        { error && <div className=\"mb-4 text-red-600 text-sm text-center\">{error}</div>}
+            < Button type =\"submit\" loading={loading}>Entrar</Button>
         </form >
       </div >
     </div >

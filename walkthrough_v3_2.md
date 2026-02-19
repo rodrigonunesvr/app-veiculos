@@ -12,7 +12,13 @@ Esta versão corrige todos os problemas de roteamento, relatórios e fluxo de vi
 1.  O arquivo `vercel.json` foi incluído para corrigir o erro "404 Not Found" ao recarregar páginas.
 2.  Garanta que as variáveis de ambiente `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` estejam corretas no painel da Vercel.
 
-## 3. Principais Mudanças
+## 3. Autenticação (Supabase)
+
+1.  No painel do Supabase, vá em **Authentication -> Providers -> Email**.
+2.  Garanta que "Enable Email Provider" esteja ativado.
+3.  Recomendado: Ative "Confirm email" se quiser obrigar a verificação (o app agora suporta isso com uma tela dedicada).
+
+## 4. Principais Mudanças
 
 *   **Viaturas (VTR)**: Agora é possível selecionar **várias viaturas** de uma vez na Entrada e na Saída (estilo checkbox).
 *   **Logout**: Botão "Sair" adicionado no cabeçalho.
