@@ -1,68 +1,55 @@
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { Home, LogIn, LogOut, LayoutDashboard, UserX, Menu } from 'lucide-react'
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../lib/supabase'
+import { LogOut, Home, Key, LogIn, LayoutDashboard } from 'lucide-react'
 
 export default function Layout() {
-    const location = useLocation()
+    const { user, signOut, isAdmin } = useAuth()
     const navigate = useNavigate()
-    const { profile, user } = useAuth()
-    const isAdmin = profile?.role === 'admin'
+    const location = useLocation()
 
-    const handleLogout = async () => {
-        await supabase.auth.signOut()
+    const handleSignOut = async () => {
+        await signOut()
         navigate('/login')
     }
+
+    if (!user) return <Outlet />
 
     const navItemClass = (path) => `flex flex-col items-center p-2 text-xs ${location.pathname === path ? 'text-blue-600' : 'text-gray-500'}`
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50">
-    {/* Header */ }
-    <header className="bg-white shadow px-4 py-3 flex justify-between items-center z-10">
-        < div >
-        <h1 className="font-bold text-lg text-blue-800 leading-tight">Controle Veículos</h1>
-    {
-        profile && <p className="text-xs text-gray-500">Olá, {profile.full_name?.split(' ')[0]}</p>}
-        </div >
-
-            <button
-                onClick={handleLogout}
-                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-        title ="Sair"
-            >
-            <LogOut size={20} />
+        <div className=\"min-h-screen flex flex-col\">
+            < header className =\"bg-white shadow px-4 py-3 flex justify-between items-center\">
+                < h1 className =\"font-bold text-lg text-blue-800\">Controle Veículos</h1>
+                    < button onClick = { handleSignOut } className =\"text-gray-500 hover:text-red-500\">
+                        < LogOut size = { 20} />
         </button >
       </header >
 
-            {/* Main Content */ }
-            < main className ="flex-1 p-4 pb-24 overflow-y-auto">
-                < Outlet />
+        <main className=\"flex-1 p-4 pb-20\">
+            < Outlet />
       </main >
 
-            {/* Bottom Nav */ }
-            < nav className ="fixed bottom-0 w-full bg-white border-t flex justify-around py-2 pb-safe z-10 shadow-lg">
-                < Link to ="/" className={navItemClass('/')}>
-                    < Home size = { 24} />
-                        <span>Início</span>
+        <nav className=\"fixed bottom-0 w-full bg-white border-t flex justify-around py-2 pb-safe\">
+            < Link to =\"/\" className={navItemClass('/')}>
+                < Home size = { 24} />
+                    <span>Início</span>
         </Link >
-            <Link to="/entry" className={navItemClass('/entry')}>
-                < LogIn size = { 24} />
-                    <span>Entrada</span>
+        <Link to=\"/entry\" className={navItemClass('/entry')}>
+            < LogIn size = { 24} />
+                <span>Entrada</span>
         </Link >
-            <Link to="/exit" className={navItemClass('/exit')}>
-                < LogOut size = { 24} className ="rotate-180" />
-                    < span > Saída</span >
+        <Link to=\"/exit\" className={navItemClass('/exit')}>
+            < LogOut size = { 24} className =\"rotate-180\" /> {/* Visual hack for Exit */}
+                < span > Saída</span >
         </Link >
-            { isAdmin && (
-                <Link to="/admin" className={navItemClass('/admin')}>
-                    < LayoutDashboard size = { 24} />
-                        <span>Admin</span>
+        { isAdmin && (
+            <Link to=\"/admin\" className={navItemClass('/admin')}>
+                < LayoutDashboard size = { 24} />
+                    <span>Admin</span>
           </Link >
         )
-    }
+}
       </nav >
     </div >
   )
 }
-
