@@ -1,0 +1,28 @@
+# Guia de Atualização v2.1 - Controle de Veículos
+
+Esta atualização traz Relatórios PDF, Destinos e Fluxo Flexível.
+
+## 1. Atualização do Banco de Dados (Supabase)
+
+1.  Acesse seu projeto no **Supabase**.
+2.  Vá em **SQL Editor**.
+3.  Cole e rode o conteúdo do arquivo `app-veiculos/schema_v2_1.sql`.
+    *   *Isso cria a tabela `vehicle_movements` e migra os dados antigos.*
+
+## 2. Deploy do Frontend (Vercel/Netlify)
+
+1.  Como você já tem o deploy configurado (v1), basta **enviar o código atualizado** (commit/push ou upload).
+2.  Certifique-se de instalar as novas dependências se rodar localmente (`npm install`).
+    *   Novos pacotes: `jspdf`, `jspdf-autotable`.
+
+## 3. Novidades no Uso
+
+*   **Entrada/Saída**: Agora exige seleção de **Destino**.
+*   **Saída Avulsa**: Se um veículo não estiver na lista "No Pátio", você pode clicar em "Não encontrou? Registrar Saída Avulsa".
+*   **Admin**:
+    *   Filtre por data.
+    *   Clique em **Exportar PDF** para gerar o relatório oficial com nome do funcionário.
+*   **Primeiro Acesso**: O sistema pedirá Nome e RG (5 dígitos) obrigatoriamente.
+
+## 4. Dúvidas?
+Consulte o arquivo `src/pages/Admin.jsx` para ver como o PDF é gerado.

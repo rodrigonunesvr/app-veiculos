@@ -1,0 +1,35 @@
+# Guia de Produção v3 - App Veículos
+
+Esta é a versão definitiva de produção. Abrange: Cadastro de Staff, Reset de Senha, 3 Tipos de Acesso (Veículo, Viatura, Pedestre) e Confirmação de Registro.
+
+## 1. Banco de Dados (Supabase)
+
+1.  Rode o script **`app-veiculos/schema_v3.sql`** no SQL Editor.
+    *   Cria tabela `movements`, `vtr_catalog` (com lista padrão) e Views.
+    *   Migra dados da v2.x para a nova estrutura.
+
+## 2. Configurar Auth (Importante)
+
+1.  No painel Supabase > **Authentication** > **URL Configuration**:
+    *   **Site URL**: Sua URL de produção (ex: `https://seu-app.vercel.app`) ou `http://localhost:5173` para teste.
+    *   **Redirect URLs**: Adicione `https://seu-app.vercel.app/reset-password` e `http://localhost:5173/reset-password`.
+2.  Habilite **Email Provider**.
+
+## 3. Deploy (Frontend)
+
+1.  Envie o código atualizado.
+2.  Configure as variáveis de ambiente (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) no Vercel.
+
+## 4. Uso do Sistema
+
+*   **Login Obrigatório**: Agora todo acesso exige login.
+*   **Criar Conta**: Novos funcionários podem se cadastrar no link "Criar Conta" da tela de login.
+*   **Entrada/Saída**:
+    *   Escolha: Veículo, Viatura ou Pedestre.
+    *   Ao salvar, uma **Tela de Confirmação** aparecerá com o resumo.
+*   **Listas**:
+    *   A Home mostra abas "No Pátio" e "Estiveram Aqui" para facilitar a saída/reentrada.
+
+## 5. Admin
+
+*   Relatório PDF v3 unificado com todos os tipos e nome do funcionário responsável.

@@ -1,4 +1,4 @@
-﻿export default function Button({ children, variant = 'primary', loading, onClick, type = 'button', className = '' }) {
+export default function Button({ children, variant = 'primary', loading, onClick, type = 'button', className = '' }) {
     const baseClass = "w-full py-2 px-4 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
 
     const variants = {
@@ -19,3 +19,4 @@
         </button>
     )
 }
+

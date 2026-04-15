@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Walkthrough v2.1 (Retry). Instructions for migrating the database using `schema_v2_1.sql` and deploying the new features (PDF, Destinations, Profile Check).",
+  "updatedAt": "2026-02-12T15:12:40.716180100Z"
+}
