@@ -39,6 +39,7 @@ export default function Exit() {
         return now.toISOString().slice(0, 16)
     }
     const [eventAt, setEventAt] = useState(getLocalNow())
+    const [customVtr, setCustomVtr] = useState('')
 
     useEffect(() => {
         fetchInside()
@@ -155,6 +156,29 @@ export default function Exit() {
     ))
 }
                 </div >
+
+                <div className="mt-3 flex gap-2">
+                    <input
+                        type="text"
+                        placeholder="Outro Prefixo (Ex: ABT-999)"
+                        className="flex-1 p-2 border rounded text-sm uppercase"
+                        value={customVtr}
+                        onChange={e => setCustomVtr(e.target.value.toUpperCase())}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (!customVtr.trim()) return;
+                            if (!selectedVtrs.includes(customVtr.trim())) {
+                                setSelectedVtrs(prev => [...prev, customVtr.trim()]);
+                            }
+                            setCustomVtr('');
+                        }}
+                        className="bg-gray-800 text-white px-3 py-2 rounded text-sm font-bold"
+                    >
+                        Adicionar
+                    </button>
+                </div>
               </div >
           ) : (
     <>
