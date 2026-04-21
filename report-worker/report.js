@@ -63,7 +63,7 @@ async function generateReport() {
         new Date(m.event_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
-        m.subject_type,
+        m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXTERNA' : m.subject_type,
         m.subject_code,
         m.driver_name || m.person_name || '-',
         m.destination || '-',
