@@ -6,6 +6,7 @@ import 'jspdf-autotable'
 
 export default function Admin() {
   const [movements, setMovements] = useState([])
+  const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -18,6 +19,7 @@ export default function Admin() {
     setStartDate(start.toISOString().split('T')[0])
     setEndDate(end.toISOString().split('T')[0])
     fetchMovements()
+    fetchUsers()
   }, [])
 
   const fetchMovements = async () => {
@@ -40,6 +42,14 @@ export default function Admin() {
     }
     setMovements(data || [])
     setLoading(false)
+  }
+
+  const fetchUsers = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name, rg5, is_admin, email')
+      .order('full_name')
+    setUsers(data || [])
   }
 
   const exportPDF = () => {
@@ -184,8 +194,54 @@ export default function Admin() {
           })}
           </tbody >
         </table >
-      </div >
-    </div >
+      </div>
+
+      <div className="bg-white p-6 rounded-lg shadow space-y-4">
+        <h3 className="font-bold text-gray-800 flex items-center gap-2">
+          👥 Gestão de Equipe & Suporte
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wider">Funcionários Cadastrados</h4>
+            <div className="border rounded divide-y max-h-60 overflow-y-auto">
+              {users.map((u, i) => (
+                <div key={i} className="p-2 flex justify-between items-center text-sm">
+                  <div>
+                    <p className="font-medium">{u.full_name}</p>
+                    <p className="text-[10px] text-gray-500">{u.email} • RG: {u.rg5}</p>
+                  </div>
+                  {u.is_admin && <span className="text-[9px] bg-blue-100 text-blue-700 px-1 rounded">ADM</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 space-y-3 font-sans">
+            <h4 className="text-sm font-bold text-amber-800 flex items-center gap-1">
+              🔑 Redefinição de Senha
+            </h4>
+            <p className="text-xs text-amber-900 leading-relaxed">
+              Como as senhas são protegidas, você deve redefini-las manualmente no painel principal:
+            </p>
+            <ol className="text-xs text-amber-900 list-decimal ml-4 space-y-1">
+              <li>Acesse o <strong>Supabase Dashboard</strong>.</li>
+              <li>Vá em <strong>Authentication</strong> → <strong>Users</strong>.</li>
+              <li>Busque o e-mail do funcionário.</li>
+              <li>Clique em <strong>Actions</strong> → <strong>Change Password</strong>.</li>
+              <li>Informe a nova senha e envie para o funcionário.</li>
+            </ol>
+            <a 
+              href="https://supabase.com/dashboard/project/_/auth/users" 
+              target="_blank" 
+              className="inline-block mt-2 text-xs font-bold text-amber-700 underline"
+            >
+              Ir para o Painel de Usuários →
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
