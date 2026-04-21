@@ -59,16 +59,23 @@ async function generateReport() {
     const table = {
       title: "Resumo de Acessos",
       headers: ["Ocorrência", "Sistema", "Ação", "Tipo", "ID/Placa", "Condutor/Pessoa", "Destino", "Responsável"],
-      rows: movements.map(m => [
-        new Date(m.event_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
-        m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXTERNA' : m.subject_type,
-        m.subject_code,
-        m.driver_name || m.person_name || '-',
-        m.destination || '-',
-        m.staff_full_name || 'Sistema'
-      ]),
+      rows: movements.map(m => {
+        const eventDate = new Date(m.event_at);
+        const createdDate = new Date(m.created_at);
+        const diffMin = Math.round((createdDate - eventDate) / 60000);
+        const retroactiveMark = diffMin > 5 ? ` (R: +${diffMin}m)` : "";
+
+        return [
+          eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          createdDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + retroactiveMark,
+          m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
+          m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXTERNA' : m.subject_type,
+          m.subject_code,
+          `${m.driver_name || m.person_name || '-'} / ${m.person_doc || '-'}`,
+          m.destination || '-',
+          m.staff_full_name || 'Sistema'
+        ];
+      }),
     };
 
     doc.table(table, {

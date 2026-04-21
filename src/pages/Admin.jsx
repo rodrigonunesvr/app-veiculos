@@ -48,17 +48,18 @@ export default function Admin() {
     doc.setFontSize(10)
     doc.text(`Período: ${startDate} a ${endDate}`, 14, 22)
 
-    const tableColumn = ["Data/Hora", "Ação", "Tipo", "ID", "Condutor", "Destino", "Funcionário"]
+    const tableColumn = ["Ocorrência", "Sistema", "Ação", "Tipo", "ID", "Condutor/Doc", "Destino", "Responsável"]
     const tableRows = []
 
     movements.forEach(m => {
       const staff = m.staff_full_name ? `${m.staff_full_name} (${m.staff_rg || 'S/RG'})` : 'Sistema'
       const row = [
         new Date(m.event_at).toLocaleString('pt-BR'),
+        new Date(m.created_at).toLocaleString('pt-BR'),
         m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
-        m.subject_type,
+        m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXT' : m.subject_type,
         m.subject_code,
-        m.driver_name || m.person_name || '-',
+        `${m.driver_name || m.person_name || '-'} / ${m.person_doc || '-'}`,
         m.destination || '-',
         staff
       ]
@@ -90,10 +91,11 @@ export default function Admin() {
            <div>
              <label className="block text-xs text-gray-500">Tipo</label>
              <select className="border p-1 rounded" value={filterType} onChange={e => setFilterType(e.target.value)}>
-    < option value ="ALL">Todos</option>
-      < option value ="VEHICLE">Veículo</option>
-        < option value ="VTR">Viatura</option>
-          < option value ="PEDESTRIAN">Pedestre</option>
+        <option value="ALL">Todos</option>
+        <option value="VEHICLE">Veículo</option>
+        <option value="VTR">Viatura</option>
+        <option value="EXTERNAL_VTR">VTR Externa</option>
+        <option value="PEDESTRIAN">Pedestre</option>
              </select >
            </div >
     <Button className="!w-auto py-1 px-3" onClick={fetchMovements}>Filtrar</Button>
@@ -107,39 +109,58 @@ export default function Admin() {
     <div className="bg-white rounded-lg shadow overflow-x-auto">
       < table className ="min-w-full text-sm">
         < thead className ="bg-gray-50 border-b">
-          < tr >
-          <th className="p-3 text-left">Data</th>
-            < th className ="p-3 text-left">Ação</th>
-              < th className ="p-3 text-left">ID</th>
-                < th className ="p-3 text-left">Info</th>
-                  < th className ="p-3 text-left">Registrado Por</th>
-            </tr >
+          <tr>
+            <th className="p-3 text-left">Ocorrência</th>
+            <th className="p-3 text-left">Registro / Status</th>
+            <th className="p-3 text-left">Ação</th>
+            <th className="p-3 text-left">Identificação</th>
+            <th className="p-3 text-left">Info / Doc</th>
+            <th className="p-3 text-left">Responsável</th>
+          </tr>
           </thead >
     <tbody>
       {movements.length === 0 && !loading && <tr><td colSpan="5" className="p-4 text-center text-gray-500">Sem registros.</td></tr>
 }
-{
-  movements.map(m => (
-    <tr key={m.id} className="border-b hover:bg-gray-50">
-  < td className ="p-3">{new Date(m.event_at).toLocaleString('pt-BR')}</td>
-  < td className ="p-3">
-  < span className = {`px-2 py-1 rounded text-xs font-bold ${m.direction === 'ENTRY' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
-    { m.direction }
-                  </span >
-                </td >
-  <td className="p-3">
-    < p className ="font-bold">{m.subject_code}</p>
-      < p className ="text-xs text-gray-500">{m.subject_type}</p>
-                </td >
-  <td className="p-3">
-    < p > { m.driver_name || m.person_name }</p >
-      <p className="text-xs text-gray-500">Dst: {m.destination}</p>
-                </td >
-  <td className="p-3 text-xs">
-{ m.staff_full_name }
-                </td >
-              </tr >
-            ))}
+          {movements.map(m => {
+            const eventDate = new Date(m.event_at)
+            const createdDate = new Date(m.created_at)
+            const diffMin = Math.round((createdDate - eventDate) / 60000)
+            const isRetroactive = diffMin > 5
+
+            return (
+              <tr key={m.id} className="border-b hover:bg-gray-50">
+                <td className="p-3">
+                  <p className="font-bold">{eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-[10px] text-gray-400">{eventDate.toLocaleDateString('pt-BR')}</p>
+                </td>
+                <td className="p-3">
+                  <p className="text-xs">{createdDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  {isRetroactive && (
+                    <span className="text-[9px] bg-amber-100 text-amber-700 font-bold px-1 rounded block w-fit">
+                      RETROATIVO (+{diffMin}m)
+                    </span>
+                  )}
+                </td>
+                <td className="p-3">
+                  <span className={`px-2 py-1 rounded text-[10px] font-bold ${m.direction === 'ENTRY' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
+                    {m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA'}
+                  </span>
+                </td>
+                <td className="p-3">
+                  <p className="font-bold text-xs">{m.subject_code}</p>
+                  <p className="text-[9px] text-gray-500">{m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXT' : m.subject_type}</p>
+                </td>
+                <td className="p-3">
+                  <p className="text-xs font-medium">{m.driver_name || m.person_name || '-'}</p>
+                  <p className="text-[10px] text-gray-500">Doc: {m.person_doc || '-'}</p>
+                  <p className="text-[10px] text-gray-400">Dst: {m.destination}</p>
+                </td>
+                <td className="p-3 text-[10px]">
+                  <p className="font-medium text-gray-600">{m.staff_full_name}</p>
+                </td>
+              </tr>
+            )
+          })}
           </tbody >
         </table >
       </div >
