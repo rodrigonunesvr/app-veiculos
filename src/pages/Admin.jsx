@@ -128,15 +128,15 @@ export default function Admin() {
             const isRetroactive = diffMin > 5
 
             return (
-              <tr key={m.id} className="border-b hover:bg-gray-50">
+              <tr key={m.id} className={`border-b hover:bg-gray-50 ${isRetroactive ? 'bg-red-50' : ''}`}>
                 <td className="p-3">
-                  <p className="font-bold">{eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="font-bold text-gray-800">{eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
                   <p className="text-[10px] text-gray-400">{eventDate.toLocaleDateString('pt-BR')}</p>
                 </td>
                 <td className="p-3">
-                  <p className="text-xs">{createdDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className={`text-xs ${isRetroactive ? 'text-red-600 font-bold' : ''}`}>{createdDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
                   {isRetroactive && (
-                    <span className="text-[9px] bg-amber-100 text-amber-700 font-bold px-1 rounded block w-fit">
+                    <span className="text-[9px] bg-red-100 text-red-700 font-bold px-1 rounded block w-fit">
                       RETROATIVO (+{diffMin}m)
                     </span>
                   )}
