@@ -73,7 +73,7 @@ async function generateReport() {
           m.subject_code,
           `${m.driver_name || m.person_name || '-'} / ${m.person_doc || '-'}`,
           m.destination || '-',
-          m.staff_full_name ? m.staff_full_name.split(' ')[0] : 'Sist.',
+          m.staff_full_name ? `${m.staff_full_name.split(' ')[0]} (${m.staff_rg || 'S/RG'})` : 'Sist.',
           diffMin > 5 ? `RET (+${diffMin}m)` : "OK"
         ];
       }),

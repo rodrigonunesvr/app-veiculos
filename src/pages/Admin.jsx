@@ -67,7 +67,7 @@ export default function Admin() {
         m.subject_code,
         `${m.driver_name || m.person_name || '-'} / ${m.person_doc || '-'}`,
         m.destination || '-',
-        m.staff_full_name || 'Sistema',
+        staff,
         statusText
       ]
       tableRows.push(row)
@@ -177,6 +177,7 @@ export default function Admin() {
                 </td>
                 <td className="p-3 text-[10px]">
                   <p className="font-medium text-gray-600">{m.staff_full_name}</p>
+                  <p className="text-[9px] text-gray-400">RG: {m.staff_rg || 'S/RG'}</p>
                 </td>
               </tr>
             )
