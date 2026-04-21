@@ -256,7 +256,7 @@ onChange = { e => handleChange('destination', e.target.value) }
 }
 
 <Input
-    label="Horário da Ocorrência (Retroativo?)"
+    label="Horário do Sistema (Fato)"
     type="datetime-local"
     value={eventAt}
     onChange={e => setEventAt(e.target.value)}

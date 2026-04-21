@@ -58,7 +58,7 @@ async function generateReport() {
 
     const table = {
       title: "Resumo de Movimentações",
-      headers: ["Ocorrência", "Sistema", "Ação", "Tipo", "ID/Placa", "Condutor/Pessoa", "Destino", "Resp.", "Status"],
+      headers: ["Sistema (Fato)", "Lançamento", "Ação", "Tipo", "ID/Placa", "Condutor/Pessoa", "Destino", "Resp.", "Status"],
       rows: movements.map(m => {
         const eventDate = new Date(m.event_at);
         const createdDate = new Date(m.created_at);
@@ -67,7 +67,7 @@ async function generateReport() {
 
         return [
           eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          createdDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          createdDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }),
           m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
           m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXT' : m.subject_type,
           m.subject_code,

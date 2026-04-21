@@ -59,7 +59,7 @@ export default function Admin() {
     doc.setFontSize(10)
     doc.text(`Período: ${startDate} a ${endDate}`, 14, 22)
 
-    const tableColumn = ["Ocorrência", "Sistema", "Ação", "Tipo", "ID", "Condutor/Doc", "Destino", "Responsável", "Status"]
+    const tableColumn = ["Sistema (Fato)", "Lançamento", "Ação", "Tipo", "ID", "Condutor/Doc", "Destino", "Responsável", "Status"]
     const tableRows = []
 
     movements.forEach(m => {
@@ -71,7 +71,7 @@ export default function Admin() {
 
       const row = [
         eventDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }),
-        createdDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        createdDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }),
         m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
         m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXT' : m.subject_type,
         m.subject_code,
@@ -140,8 +140,8 @@ export default function Admin() {
       < table className ="min-w-full text-sm">
         < thead className ="bg-gray-50 border-b">
           <tr>
-            <th className="p-3 text-left">Ocorrência</th>
-            <th className="p-3 text-left">Registro / Status</th>
+            <th className="p-3 text-left">Sistema (Fato)</th>
+            <th className="p-3 text-left">Lançamento / Status</th>
             <th className="p-3 text-left">Ação</th>
             <th className="p-3 text-left">Identificação</th>
             <th className="p-3 text-left">Info / Doc</th>
@@ -164,7 +164,8 @@ export default function Admin() {
                   <p className="text-[10px] text-gray-400">{eventDate.toLocaleDateString('pt-BR')}</p>
                 </td>
                 <td className="p-3">
-                  <p className={`text-xs ${isRetroactive ? 'text-red-600 font-bold' : ''}`}>{createdDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-xs font-bold text-gray-800">{createdDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-[10px] text-gray-500">{createdDate.toLocaleDateString('pt-BR')}</p>
                   {isRetroactive && (
                     <span className="text-[9px] bg-red-100 text-red-700 font-bold px-1 rounded block w-fit">
                       RETROATIVO (+{diffMin}m)
