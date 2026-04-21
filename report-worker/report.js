@@ -52,13 +52,13 @@ async function generateReport() {
       resolve(pdfBuffer);
     });
 
-    doc.fontSize(16).text('Relatório Diário de Movimentação - Controle de Acesso', { align: 'center' });
-    doc.fontSize(10).text(`Período: ${yesterday.toLocaleString('pt-BR')} até ${new Date().toLocaleString('pt-BR')}`, { align: 'center' });
+    doc.fontSize(16).text('RELATÓRIO DE AUDITORIA V5 - CONTROLE DE ACESSO', { align: 'center' });
+    doc.fontSize(10).text(`Período de Auditoria: ${yesterday.toLocaleString('pt-BR')} até ${new Date().toLocaleString('pt-BR')}`, { align: 'center' });
     doc.moveDown();
 
     const table = {
-      title: "Resumo de Acessos",
-      headers: ["Ocorrência", "Sistema", "Ação", "Tipo", "ID/Placa", "Condutor/Pessoa", "Destino", "Responsável"],
+      title: "Resumo de Movimentações",
+      headers: ["Ocorrência", "Sistema", "Ação", "Tipo", "ID/Placa", "Condutor/Pessoa", "Destino", "Resp.", "Status"],
       rows: movements.map(m => {
         const eventDate = new Date(m.event_at);
         const createdDate = new Date(m.created_at);
@@ -67,13 +67,14 @@ async function generateReport() {
 
         return [
           eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          createdDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + retroactiveMark,
+          createdDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
           m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
-          m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXTERNA' : m.subject_type,
+          m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXT' : m.subject_type,
           m.subject_code,
           `${m.driver_name || m.person_name || '-'} / ${m.person_doc || '-'}`,
           m.destination || '-',
-          m.staff_full_name || 'Sistema'
+          m.staff_full_name ? m.staff_full_name.split(' ')[0] : 'Sist.',
+          diffMin > 5 ? `RET (+${diffMin}m)` : "OK"
         ];
       }),
     };

@@ -43,25 +43,32 @@ export default function Admin() {
   }
 
   const exportPDF = () => {
-    const doc = new jsPDF()
-    doc.text("Relatório Oficial - Controle de Acesso", 14, 15)
+    const doc = new jsPDF('l', 'mm', 'a4') // Mudando para Paisagem (Landscape) para caber tudo
+    doc.setFontSize(14)
+    doc.text("RELATÓRIO DE AUDITORIA - CONTROLE DE ACESSO (V5)", 14, 15)
     doc.setFontSize(10)
     doc.text(`Período: ${startDate} a ${endDate}`, 14, 22)
 
-    const tableColumn = ["Ocorrência", "Sistema", "Ação", "Tipo", "ID", "Condutor/Doc", "Destino", "Responsável"]
+    const tableColumn = ["Ocorrência", "Sistema", "Ação", "Tipo", "ID", "Condutor/Doc", "Destino", "Responsável", "Status"]
     const tableRows = []
 
     movements.forEach(m => {
       const staff = m.staff_full_name ? `${m.staff_full_name} (${m.staff_rg || 'S/RG'})` : 'Sistema'
+      const eventDate = new Date(m.event_at)
+      const createdDate = new Date(m.created_at)
+      const diffMin = Math.round((createdDate - eventDate) / 60000)
+      const statusText = diffMin > 5 ? `RETRO (+${diffMin}m)` : "OK"
+
       const row = [
-        new Date(m.event_at).toLocaleString('pt-BR'),
-        new Date(m.created_at).toLocaleString('pt-BR'),
+        eventDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }),
+        createdDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
         m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXT' : m.subject_type,
         m.subject_code,
         `${m.driver_name || m.person_name || '-'} / ${m.person_doc || '-'}`,
         m.destination || '-',
-        staff
+        m.staff_full_name || 'Sistema',
+        statusText
       ]
       tableRows.push(row)
     })
@@ -70,7 +77,20 @@ export default function Admin() {
       head: [tableColumn],
       body: tableRows,
       startY: 30,
-      styles: { fontSize: 7 }
+      styles: { fontSize: 6, cellPadding: 1.5 },
+      columnStyles: {
+        0: { cellWidth: 32 }, // Ocorrência
+        1: { cellWidth: 20 }, // Sistema
+        8: { cellWidth: 30 }  // Status
+      },
+      didParseCell: (data) => {
+        if (data.section === 'body' && data.column.index === 8) {
+          if (data.cell.raw !== "OK") {
+            data.cell.styles.textColor = [200, 0, 0]; // Red
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      }
     })
 
     doc.save(`relatorio_${startDate}.pdf`)
