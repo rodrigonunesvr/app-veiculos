@@ -30,6 +30,14 @@ export default function Entry() {
     const [confirming, setConfirming] = useState(false)
     const [loading, setLoading] = useState(false)
 
+    // Default to local time for datetime-local input
+    const getLocalNow = () => {
+        const now = new Date()
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+        return now.toISOString().slice(0, 16)
+    }
+    const [eventAt, setEventAt] = useState(getLocalNow())
+
     useEffect(() => {
         supabase.from('vtr_catalog').select('code').then(({ data }) => setVtrList(data || []))
     }, [])
@@ -82,6 +90,7 @@ export default function Entry() {
                 direction: 'ENTRY',
                 subject_type: type,
                 destination: finalDest,
+                event_at: new Date(eventAt).toISOString(),
                 created_by: profile?.id // Optional, default is auth.uid()
             }
 
@@ -217,6 +226,13 @@ onChange = { e => handleChange('destination', e.target.value) }
         )
 }
 
+<Input
+    label="Horário da Ocorrência (Retroativo?)"
+    type="datetime-local"
+    value={eventAt}
+    onChange={e => setEventAt(e.target.value)}
+/>
+
     < Button type ="submit" variant="primary" className="mt-4">Continuar</Button>
       </form >
 
@@ -231,7 +247,8 @@ onChange = { e => handleChange('destination', e.target.value) }
             subject_code: getSummaryCode(),
             driver_name: data.driver,
             destination: data.destination === 'OUTROS' ? data.destOther : data.destination,
-            staff_name: profile?.full_name
+            staff_name: profile?.full_name,
+            event_at: eventAt
         }}
     />
     </div >

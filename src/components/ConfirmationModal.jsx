@@ -14,6 +14,7 @@ export default function ConfirmationModal({ show, onClose, onConfirm, data, load
                                 < p > <span className="font-bold">Identificação:</span> {data.subject_code}</p>
     { data.driver_name && <p><span className="font-bold">Condutor:</span> { data.driver_name }</p >}
     { data.destination && <p><span className="font-bold">Destino:</span> { data.destination }</p >}
+    { data.event_at && <p><span className="font-bold">Horário:</span> { new Date(data.event_at).toLocaleString('pt-BR') }</p >}
     <div className="border-t pt-2 mt-2">
         < p className ="text-xs text-gray-500">Registrado por:</p>
             < p className ="font-bold">{data.staff_name}</p>

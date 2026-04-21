@@ -58,9 +58,10 @@ async function generateReport() {
 
     const table = {
       title: "Resumo de Acessos",
-      headers: ["Hora", "Ação", "Tipo", "ID/Placa", "Condutor/Pessoa", "Destino", "Registrado Por"],
+      headers: ["Ocorrência", "Sistema", "Ação", "Tipo", "ID/Placa", "Condutor/Pessoa", "Destino", "Responsável"],
       rows: movements.map(m => [
         new Date(m.event_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
         m.subject_type,
         m.subject_code,
