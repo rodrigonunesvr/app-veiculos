@@ -11,6 +11,12 @@ export default function Admin() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [filterType, setFilterType] = useState('ALL')
+  
+  // Paginação
+  const [movementsPage, setMovementsPage] = useState(1)
+  const MOVEMENTS_PER_PAGE = 15
+  const [usersPage, setUsersPage] = useState(1)
+  const USERS_PER_PAGE = 10
 
   useEffect(() => {
     const end = new Date()
@@ -45,10 +51,18 @@ export default function Admin() {
   }
 
   const fetchUsers = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .select('full_name, rg5, is_admin, email')
       .order('full_name')
+    
+    if (error) {
+      console.error('Erro ao buscar usuários:', error)
+      // Se der erro de permissão (42501), avisar o admin
+      if (error.code === '42501') {
+        alert('Atenção: Você não tem permissão para ver a lista de funcionários. Verifique as políticas de RLS no Banco de Dados.')
+      }
+    }
     setUsers(data || [])
   }
 
@@ -106,52 +120,57 @@ export default function Admin() {
     doc.save(`relatorio_${startDate}.pdf`)
   }
 
+  const paginatedMovements = movements.slice((movementsPage - 1) * MOVEMENTS_PER_PAGE, movementsPage * MOVEMENTS_PER_PAGE)
+  const totalMovementPages = Math.ceil(movements.length / MOVEMENTS_PER_PAGE)
+
+  const paginatedUsers = users.slice((usersPage - 1) * USERS_PER_PAGE, usersPage * USERS_PER_PAGE)
+  const totalUserPages = Math.ceil(users.length / USERS_PER_PAGE)
+
   return (
     <div className="space-y-4 pb-20">
-      < div className ="flex flex-col gap-4 bg-white p-4 rounded-lg shadow">
-        < div className ="flex flex-wrap gap-2 items-end">
-          < div >
-          <label className="block text-xs text-gray-500">Início</label>
-            < input type ="date" className="border p-1 rounded" value={startDate} onChange={e => setStartDate(e.target.value)} />
-           </div >
-           <div>
-             <label className="block text-xs text-gray-500">Fim</label>
-             <input type="date" className="border p-1 rounded" value={endDate} onChange={e => setEndDate(e.target.value)} />
-           </div >
-           <div>
-             <label className="block text-xs text-gray-500">Tipo</label>
-             <select className="border p-1 rounded" value={filterType} onChange={e => setFilterType(e.target.value)}>
-        <option value="ALL">Todos</option>
-        <option value="VEHICLE">Veículo</option>
-        <option value="VTR">Viatura</option>
-        <option value="EXTERNAL_VTR">VTR Externa</option>
-        <option value="PEDESTRIAN">Pedestre</option>
-             </select >
-           </div >
-    <Button className="!w-auto py-1 px-3" onClick={fetchMovements}>Filtrar</Button>
-        </div >
+      <div className="flex flex-col gap-4 bg-white p-4 rounded-lg shadow">
+        <div className="flex flex-wrap gap-2 items-end">
+          <div>
+            <label className="block text-xs text-gray-500">Início</label>
+            <input type="date" className="border p-1 rounded" value={startDate} onChange={e => setStartDate(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500">Fim</label>
+            <input type="date" className="border p-1 rounded" value={endDate} onChange={e => setEndDate(e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500">Tipo</label>
+            <select className="border p-1 rounded" value={filterType} onChange={e => setFilterType(e.target.value)}>
+              <option value="ALL">Todos</option>
+              <option value="VEHICLE">Veículo</option>
+              <option value="VTR">Viatura</option>
+              <option value="EXTERNAL_VTR">VTR Externa</option>
+              <option value="PEDESTRIAN">Pedestre</option>
+            </select>
+          </div>
+          <Button className="!w-auto py-1 px-3" onClick={() => { setMovementsPage(1); fetchMovements(); }}>Filtrar</Button>
+        </div>
 
-    <div className="border-t pt-2">
-      < Button variant ="primary" className="!w-auto" onClick={exportPDF}>Exportar PDF Oficial</Button>
-        </div >
-      </div >
+        <div className="border-t pt-2">
+          <Button variant="primary" className="!w-auto" onClick={exportPDF}>Exportar PDF Oficial (V5)</Button>
+        </div>
+      </div>
 
-    <div className="bg-white rounded-lg shadow overflow-x-auto">
-      < table className ="min-w-full text-sm">
-        < thead className ="bg-gray-50 border-b">
-          <tr>
-            <th className="p-3 text-left">Sistema (Fato)</th>
-            <th className="p-3 text-left">Lançamento / Status</th>
-            <th className="p-3 text-left">Ação</th>
-            <th className="p-3 text-left">Identificação</th>
-            <th className="p-3 text-left">Info / Doc</th>
-            <th className="p-3 text-left">Responsável</th>
-          </tr>
-          </thead >
-    <tbody>
-      {movements.length === 0 && !loading && <tr><td colSpan="5" className="p-4 text-center text-gray-500">Sem registros.</td></tr>
-}
-          {movements.map(m => {
+      <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              <th className="p-3 text-left">Sistema (Fato)</th>
+              <th className="p-3 text-left">Lançamento / Status</th>
+              <th className="p-3 text-left">Ação</th>
+              <th className="p-3 text-left">Identificação</th>
+              <th className="p-3 text-left">Info / Doc</th>
+              <th className="p-3 text-left">Responsável</th>
+            </tr>
+          </thead>
+          <tbody>
+            {movements.length === 0 && !loading && <tr><td colSpan="6" className="p-4 text-center text-gray-500">Sem registros.</td></tr>}
+            {paginatedMovements.map(m => {
             const eventDate = new Date(m.event_at)
             const createdDate = new Date(m.created_at)
             const diffMin = Math.round((createdDate - eventDate) / 60000)
@@ -193,8 +212,28 @@ export default function Admin() {
               </tr>
             )
           })}
-          </tbody >
-        </table >
+          </tbody>
+        </table>
+
+        {totalMovementPages > 1 && (
+          <div className="p-3 flex items-center justify-between border-t bg-gray-50">
+            <button 
+              disabled={movementsPage === 1}
+              onClick={() => setMovementsPage(p => p - 1)}
+              className="px-3 py-1 bg-white border rounded text-xs disabled:opacity-50 font-bold"
+            >
+              Anterior
+            </button>
+            <span className="text-[10px] text-gray-500">Página {movementsPage} de {totalMovementPages}</span>
+            <button 
+              disabled={movementsPage === totalMovementPages}
+              onClick={() => setMovementsPage(p => p + 1)}
+              className="px-3 py-1 bg-white border rounded text-xs disabled:opacity-50 font-bold"
+            >
+              Próxima
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow space-y-4">
@@ -205,9 +244,10 @@ export default function Admin() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-3">
             <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wider">Funcionários Cadastrados</h4>
-            <div className="border rounded divide-y max-h-60 overflow-y-auto">
-              {users.map((u, i) => (
-                <div key={i} className="p-2 flex justify-between items-center text-sm">
+            <div className="border rounded divide-y overflow-hidden">
+              {users.length === 0 && <p className="p-4 text-center text-xs text-gray-400">Nenhum funcionário encontrado.</p>}
+              {paginatedUsers.map((u, i) => (
+                <div key={i} className="p-2 flex justify-between items-center text-sm hover:bg-gray-50">
                   <div>
                     <p className="font-medium">{u.full_name}</p>
                     <p className="text-[10px] text-gray-500">{u.email} • RG: {u.rg5}</p>
@@ -216,6 +256,26 @@ export default function Admin() {
                 </div>
               ))}
             </div>
+            
+            {totalUserPages > 1 && (
+              <div className="flex items-center justify-between mt-2 pt-2 border-t">
+                <button 
+                  disabled={usersPage === 1}
+                  onClick={() => setUsersPage(p => p - 1)}
+                  className="px-2 py-1 bg-gray-100 border rounded text-[10px] disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <span className="text-[10px] text-gray-500">{usersPage} / {totalUserPages}</span>
+                <button 
+                  disabled={usersPage === totalUserPages}
+                  onClick={() => setUsersPage(p => p + 1)}
+                  className="px-2 py-1 bg-gray-100 border rounded text-[10px] disabled:opacity-50"
+                >
+                  Próxima
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 space-y-3 font-sans">
