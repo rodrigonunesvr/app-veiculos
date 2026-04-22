@@ -56,6 +56,8 @@ export default function Admin() {
       .select('full_name, rg5, is_admin, email')
       .order('full_name')
     
+    if (data) console.log('Funcionários carregados:', data.length)
+    
     if (error) {
       console.error('Erro ao buscar usuários:', error)
       // Se der erro de permissão (42501), avisar o admin
@@ -152,7 +154,7 @@ export default function Admin() {
         </div>
 
         <div className="border-t pt-2">
-          <Button variant="primary" className="!w-auto" onClick={exportPDF}>Exportar PDF Oficial (V5)</Button>
+          <Button variant="primary" className="!w-auto" onClick={exportPDF}>Exportar PDF Oficial</Button>
         </div>
       </div>
 
