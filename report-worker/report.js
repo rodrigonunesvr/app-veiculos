@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import PDFDocument from 'pdfkit-table';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -8,18 +8,27 @@ dotenv.config();
 const {
   SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY,
-  RESEND_API_KEY,
-  REPORT_EMAILS, // Comma separated emails
-  FROM_EMAIL = 'onboarding@resend.dev'
+  SMTP_USER, // O seu e-mail do Gmail
+  SMTP_PASS, // A sua senha de App do Google (16 dígitos)
+  REPORT_EMAILS, // Lista de e-mails separados por vírgula
+  FROM_EMAIL // Remetente (geralmente o mesmo que SMTP_USER)
 } = process.env;
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !RESEND_API_KEY) {
-  console.error('Missing required environment variables');
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SMTP_USER || !SMTP_PASS) {
+  console.error('Faltam variáveis de ambiente (SUPABASE ou SMTP)');
   process.exit(1);
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-const resend = new Resend(RESEND_API_KEY);
+
+// Configuração do Transportador SMTP (Gmail)
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: SMTP_USER,
+    pass: SMTP_PASS,
+  },
+});
 
 async function generateReport() {
   console.log('Generating daily report for', new Date().toLocaleDateString());
@@ -95,8 +104,8 @@ async function run() {
     const pdfBuffer = await generateReport();
     const emails = REPORT_EMAILS.split(',').map(e => e.trim());
 
-    const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
+    const mailOptions = {
+      from: FROM_EMAIL || SMTP_USER,
       to: emails,
       subject: `Relatório de Movimentação Diária - ${new Date().toLocaleDateString('pt-BR')}`,
       html: `<strong>Bom dia,</strong><br><br>Segue em anexo o relatório de entrada e saída das últimas 24 horas.<br><br>Sistema de Controle de Acesso`,
@@ -106,15 +115,13 @@ async function run() {
           content: pdfBuffer,
         },
       ],
-    });
+    };
 
-    if (error) {
-      console.error('Error sending email:', error);
-    } else {
-      console.log('Email sent successfully!', data);
-    }
+    const info = await transporter.sendMail(mailOptions);
+    console.log('E-mail enviado com sucesso (Gmail):', info.messageId);
+    
   } catch (err) {
-    console.error('Fatal error in report worker:', err);
+    console.error('Erro fatal no robô de relatórios:', err);
   }
 }
 
