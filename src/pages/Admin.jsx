@@ -80,7 +80,6 @@ export default function Admin() {
         .update({
           full_name: editingUser.full_name,
           rg5: editingUser.rg5,
-          email: editingUser.email,
           is_admin: editingUser.is_admin
         })
         .eq('id', editingUser.id)
@@ -362,14 +361,8 @@ export default function Admin() {
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1">E-mail (Exibição)</label>
-                <input 
-                  type="email" 
-                  className="w-full p-2 border rounded text-sm bg-gray-50"
-                  value={editingUser.email}
-                  onChange={e => setEditingUser({...editingUser, email: e.target.value})}
-                  required
-                />
+                <p className="text-[10px] uppercase text-gray-400 font-bold mb-1">E-mail (Apenas Leitura)</p>
+                <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded border border-dashed">{editingUser.email}</p>
               </div>
               <div>
                 <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1">RG</label>
@@ -403,7 +396,7 @@ export default function Admin() {
                 </Button>
               </div>
               <p className="text-[9px] text-gray-400 text-center italic mt-2">
-                * Alterar e-mail aqui não muda o e-mail de login do usuário.
+                * O e-mail não pode ser alterado por ser o identificador de login.
               </p>
             </form>
           </div>
