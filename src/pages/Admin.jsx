@@ -400,7 +400,7 @@ export default function Admin() {
                 </button>
                 <Button type="submit" loading={loading} className="flex-1">
                   Salvar
-                </button>
+                </Button>
               </div>
               <p className="text-[9px] text-gray-400 text-center italic mt-2">
                 * Alterar e-mail aqui não muda o e-mail de login do usuário.
