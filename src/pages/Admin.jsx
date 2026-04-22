@@ -53,18 +53,18 @@ export default function Admin() {
   const fetchUsers = async () => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('full_name, rg5, is_admin, email')
+      .select('*')
       .order('full_name')
     
-    if (data) console.log('Funcionários carregados:', data.length)
-    
     if (error) {
-      console.error('Erro ao buscar usuários:', error)
-      // Se der erro de permissão (42501), avisar o admin
-      if (error.code === '42501') {
-        alert('Atenção: Você não tem permissão para ver a lista de funcionários. Verifique as políticas de RLS no Banco de Dados.')
-      }
+      console.error('Erro na busca de usuários:', error)
+      alert(`Erro BD: ${error.code} - ${error.message}`)
     }
+    
+    if (data) {
+      console.log('Usuários brutos recebidos:', data)
+    }
+    
     setUsers(data || [])
   }
 
@@ -239,9 +239,14 @@ export default function Admin() {
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow space-y-4">
-        <h3 className="font-bold text-gray-800 flex items-center gap-2">
-          👥 Gestão de Equipe & Suporte
-        </h3>
+        <div className="flex justify-between items-center">
+          <h3 className="font-bold text-gray-800 flex items-center gap-2">
+            👥 Gestão de Equipe & Suporte
+          </h3>
+          <span className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-500 font-mono">
+            DEBUG: {users.length} usuários
+          </span>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-3">
