@@ -14,9 +14,12 @@ export default function Admin() {
   
   // Paginação
   const [movementsPage, setMovementsPage] = useState(1)
-  const MOVEMENTS_PER_PAGE = 15
+  const MOVEMENTS_PER_PAGE = 10
   const [usersPage, setUsersPage] = useState(1)
   const USERS_PER_PAGE = 10
+
+  // Edição de Usuário
+  const [editingUser, setEditingUser] = useState(null)
 
   useEffect(() => {
     const end = new Date()
@@ -66,6 +69,31 @@ export default function Admin() {
     }
     
     setUsers(data || [])
+  }
+
+  const handleSaveUser = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: editingUser.full_name,
+          rg5: editingUser.rg5,
+          email: editingUser.email,
+          is_admin: editingUser.is_admin
+        })
+        .eq('id', editingUser.id)
+
+      if (error) throw error
+      alert('Usuário atualizado com sucesso!')
+      setEditingUser(null)
+      fetchUsers()
+    } catch (err) {
+      alert('Erro ao atualizar: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const exportPDF = () => {
@@ -255,11 +283,19 @@ export default function Admin() {
               {users.length === 0 && <p className="p-4 text-center text-xs text-gray-400">Nenhum funcionário encontrado.</p>}
               {paginatedUsers.map((u, i) => (
                 <div key={i} className="p-2 flex justify-between items-center text-sm hover:bg-gray-50">
-                  <div>
+                  <div className="flex-grow">
                     <p className="font-medium">{u.full_name}</p>
                     <p className="text-[10px] text-gray-500">{u.email} • RG: {u.rg5}</p>
                   </div>
-                  {u.is_admin && <span className="text-[9px] bg-blue-100 text-blue-700 px-1 rounded">ADM</span>}
+                  <div className="flex items-center gap-2">
+                    {u.is_admin && <span className="text-[9px] bg-blue-100 text-blue-700 px-1 rounded">ADM</span>}
+                    <button 
+                      onClick={() => setEditingUser(u)}
+                      className="text-blue-600 hover:text-blue-800 text-[10px] font-bold"
+                    >
+                      Editar
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -309,6 +345,70 @@ export default function Admin() {
           </div>
         </div>
       </div>
+
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <h3 className="font-bold text-gray-800 mb-4">Editar Funcionário</h3>
+            <form onSubmit={handleSaveUser} className="space-y-3">
+              <div>
+                <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1">Nome Completo</label>
+                <input 
+                  type="text" 
+                  className="w-full p-2 border rounded text-sm"
+                  value={editingUser.full_name}
+                  onChange={e => setEditingUser({...editingUser, full_name: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1">E-mail (Exibição)</label>
+                <input 
+                  type="email" 
+                  className="w-full p-2 border rounded text-sm bg-gray-50"
+                  value={editingUser.email}
+                  onChange={e => setEditingUser({...editingUser, email: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase text-gray-500 font-bold mb-1">RG</label>
+                <input 
+                  type="text" 
+                  className="w-full p-2 border rounded text-sm"
+                  value={editingUser.rg5}
+                  onChange={e => setEditingUser({...editingUser, rg5: e.target.value})}
+                />
+              </div>
+              <div className="flex items-center gap-2 py-2">
+                <input 
+                  type="checkbox" 
+                  id="isAdminMode"
+                  checked={editingUser.is_admin}
+                  onChange={e => setEditingUser({...editingUser, is_admin: e.target.checked})}
+                />
+                <label htmlFor="isAdminMode" className="text-sm font-medium text-gray-700">Privilégios de Administrador</label>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => setEditingUser(null)}
+                  className="flex-1 py-2 text-sm border rounded hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <Button type="submit" loading={loading} className="flex-1">
+                  Salvar
+                </button>
+              </div>
+              <p className="text-[9px] text-gray-400 text-center italic mt-2">
+                * Alterar e-mail aqui não muda o e-mail de login do usuário.
+              </p>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
