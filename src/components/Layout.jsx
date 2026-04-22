@@ -6,8 +6,7 @@ import { supabase } from '../lib/supabase'
 export default function Layout() {
     const location = useLocation()
     const navigate = useNavigate()
-    const { profile, user } = useAuth()
-    const isAdmin = profile?.role === 'admin'
+    const { profile, user, isAdmin } = useAuth()
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
