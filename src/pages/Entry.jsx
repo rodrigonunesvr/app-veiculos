@@ -168,10 +168,11 @@ export default function Entry() {
             onBlur={handleBlur}
             placeholder="ABC-1234"
             />
-            <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Posto / Graduação</label>
+            {/* RANK SELECTOR - SEMPRE VISÍVEL PARA VEHICLE */}
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                <label className="block text-xs font-bold text-blue-800 uppercase mb-2">Posto / Graduação do Condutor</label>
                 <select
-                    className="w-full p-2 border rounded-md"
+                    className="w-full p-3 border-2 border-blue-200 rounded-lg bg-white font-bold text-blue-900 focus:border-blue-500 outline-none"
                     value={data.rank}
                     onChange={e => handleChange('rank', e.target.value)}
                 >

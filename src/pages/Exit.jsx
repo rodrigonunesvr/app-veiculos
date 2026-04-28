@@ -179,10 +179,10 @@ export default function Exit() {
             placeholder={type === 'VEHICLE' ? 'ABC-1234' : (type === 'EXTERNAL_VTR' ? 'ABT-123' : '')}
         />
         {type === 'VEHICLE' && (
-            <div className="mb-3 text-left">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Posto / Graduação</label>
+            <div className="mb-4 p-3 bg-orange-50 border border-orange-100 rounded-lg text-left">
+                <label className="block text-xs font-bold text-orange-800 uppercase mb-2">Posto / Graduação do Condutor</label>
                 <select
-                    className="w-full p-2 border rounded-md"
+                    className="w-full p-3 border-2 border-orange-200 rounded-lg bg-white font-bold text-orange-900 focus:border-orange-500 outline-none"
                     value={data.rank}
                     onChange={e => handleChange('rank', e.target.value)}
                 >

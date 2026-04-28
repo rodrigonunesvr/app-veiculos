@@ -20,7 +20,7 @@ export default function Layout() {
     {/* Header */ }
     <header className="bg-white shadow px-4 py-3 flex justify-between items-center z-10">
         < div >
-        <h1 className="font-bold text-lg text-blue-800 leading-tight">Controle Veículos</h1>
+        <h1 className="font-bold text-lg text-blue-800 leading-tight">Controle Veículos <span className="text-[10px] bg-blue-100 px-1 rounded">V16.2 PREMIUM</span></h1>
     {
         profile && <p className="text-xs text-gray-500">Olá, {profile.full_name?.split(' ')[0]}</p>}
         </div >
