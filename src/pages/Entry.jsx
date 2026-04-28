@@ -11,6 +11,10 @@ const DESTINATIONS = [
     '7º GBM', 'SOCORRO', 'CSM', 'ESTAFETA', 'ODONTO.', 'CRSI', 'MANUTENÇÃO', 'OUTROS'
 ]
 
+const RANKS = [
+    'CIVIL', 'SD', 'CB', 'SGT', 'SUBTEN', 'TEN', 'CAP', 'MAJ', 'TENCEL', 'CEL'
+]
+
 export default function Entry() {
     const { profile } = useAuth()
     const navigate = useNavigate()
@@ -21,7 +25,8 @@ export default function Entry() {
         driver: '',
         destination: DESTINATIONS[0],
         destOther: '',
-        rg: ''
+        rg: '',
+        rank: 'CIVIL'
     })
 
     // VTR Multi-Select Support
@@ -110,10 +115,14 @@ export default function Entry() {
                 if (error) throw error
             } else {
                 // Single Entry
+                const finalDriverName = (type === 'VEHICLE' && data.rank !== 'CIVIL') 
+                    ? `${data.rank} ${data.driver}` 
+                    : data.driver
+
                 const payload = {
                     ...payloadBase,
                     subject_code: data.code,
-                    driver_name: (type === 'VEHICLE' || type === 'EXTERNAL_VTR') ? data.driver : null,
+                    driver_name: (type === 'VEHICLE' || type === 'EXTERNAL_VTR') ? finalDriverName : null,
                     person_name: type === 'PEDESTRIAN' ? data.driver : null,
                     person_doc: (type === 'PEDESTRIAN') ? data.code : (data.rg || null),
                 }
@@ -142,7 +151,7 @@ export default function Entry() {
 
                 < TypeSelector value = { type } onChange = {(t) => {
         setType(t);
-        setData(d => ({ ...d, code: '', driver: '', rg: '' }));
+        setData(d => ({ ...d, code: '', driver: '', rg: '', rank: 'CIVIL' }));
         setSelectedVtrs([]);
     }
 } />
@@ -159,8 +168,18 @@ export default function Entry() {
             onBlur={handleBlur}
             placeholder="ABC-1234"
             />
+            <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Posto / Graduação</label>
+                <select
+                    className="w-full p-2 border rounded-md"
+                    value={data.rank}
+                    onChange={e => handleChange('rank', e.target.value)}
+                >
+                    {RANKS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+            </div>
             <Input
-                label="Condutor"
+                label="Condutor (Nome)"
             value={data.driver}
             onChange={e => handleChange('driver', e.target.value)} 
             />
@@ -279,7 +298,7 @@ onChange = { e => handleChange('destination', e.target.value) }
             type: 'ENTRY',
             subject_type: type,
             subject_code: getSummaryCode(),
-            driver_name: data.driver,
+            driver_name: (type === 'VEHICLE' && data.rank !== 'CIVIL') ? `${data.rank} ${data.driver}` : data.driver,
             destination: data.destination === 'OUTROS' ? data.destOther : data.destination,
             staff_name: profile?.full_name,
             event_at: eventAt,

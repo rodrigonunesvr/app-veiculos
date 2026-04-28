@@ -11,6 +11,10 @@ const DESTINATIONS = [
     '7º GBM', 'SOCORRO', 'CSM', 'ESTAFETA', 'ODONTO.', 'CRSI', 'MANUTENÇÃO', 'OUTROS'
 ]
 
+const RANKS = [
+    'CIVIL', 'SD', 'CB', 'SGT', 'SUBTEN', 'TEN', 'CAP', 'MAJ', 'TENCEL', 'CEL'
+]
+
 export default function Exit() {
     const { profile } = useAuth()
     const navigate = useNavigate()
@@ -21,7 +25,8 @@ export default function Exit() {
         driver: '',
         destination: DESTINATIONS[0],
         destOther: '',
-        rg: ''
+        rg: '',
+        rank: 'CIVIL'
     })
 
     // VTR Multi-Select
@@ -104,10 +109,14 @@ export default function Exit() {
                 const { error } = await supabase.from('movements').insert(rows)
                 if (error) throw error
             } else {
+                const finalDriverName = (type === 'VEHICLE' && data.rank !== 'CIVIL') 
+                    ? `${data.rank} ${data.driver}` 
+                    : data.driver
+
                 const payload = {
                     ...payloadBase,
                     subject_code: data.code,
-                    driver_name: (type === 'VEHICLE' || type === 'EXTERNAL_VTR') ? data.driver : null,
+                    driver_name: (type === 'VEHICLE' || type === 'EXTERNAL_VTR') ? finalDriverName : null,
                     person_name: type === 'PEDESTRIAN' ? data.driver : null,
                     person_doc: (type === 'PEDESTRIAN') ? data.code : (data.rg || null),
                 }
@@ -139,7 +148,7 @@ export default function Exit() {
             < div className ="bg-white p-6 rounded-lg shadow mb-6">
                 < h2 className ="text-xl font-bold mb-4 text-orange-700">Registrar Saída</h2>
 
-                    < TypeSelector value = { type } onChange = {(t) => { setType(t); setSelectedVtrs([]); setData(d => ({ ...d, code: '', driver: '', rg: '' })); }
+                    < TypeSelector value = { type } onChange = {(t) => { setType(t); setSelectedVtrs([]); setData(d => ({ ...d, code: '', driver: '', rg: '', rank: 'CIVIL' })); }
 } />
 
     < form onSubmit = { handlePreSubmit } >
@@ -169,6 +178,18 @@ export default function Exit() {
             onChange={e => handleChange('code', e.target.value.toUpperCase())}
             placeholder={type === 'VEHICLE' ? 'ABC-1234' : (type === 'EXTERNAL_VTR' ? 'ABT-123' : '')}
         />
+        {type === 'VEHICLE' && (
+            <div className="mb-3 text-left">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Posto / Graduação</label>
+                <select
+                    className="w-full p-2 border rounded-md"
+                    value={data.rank}
+                    onChange={e => handleChange('rank', e.target.value)}
+                >
+                    {RANKS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+            </div>
+        )}
         <Input
             label={type === 'PEDESTRIAN' ? 'Nome' : 'Condutor'}
             value={data.driver}
@@ -254,7 +275,7 @@ onChange = { e => handleChange('destination', e.target.value) }
         type: 'EXIT',
         subject_type: type,
         subject_code: getSummaryCode(),
-        driver_name: data.driver,
+        driver_name: (type === 'VEHICLE' && data.rank !== 'CIVIL') ? `${data.rank} ${data.driver}` : data.driver,
         destination: data.destination === 'OUTROS' ? data.destOther : data.destination,
         staff_name: profile?.full_name,
         event_at: eventAt,
