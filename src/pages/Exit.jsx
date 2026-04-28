@@ -139,7 +139,7 @@ export default function Exit() {
             < div className ="bg-white p-6 rounded-lg shadow mb-6">
                 < h2 className ="text-xl font-bold mb-4 text-orange-700">Registrar Saída</h2>
 
-                    < TypeSelector value = { type } onChange = {(t) => { setType(t); setSelectedVtrs([]); }
+                    < TypeSelector value = { type } onChange = {(t) => { setType(t); setSelectedVtrs([]); setData(d => ({ ...d, code: '', driver: '', rg: '' })); }
 } />
 
     < form onSubmit = { handlePreSubmit } >

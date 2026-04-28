@@ -142,7 +142,7 @@ export default function Entry() {
 
                 < TypeSelector value = { type } onChange = {(t) => {
         setType(t);
-        setData(d => ({ ...d, code: '', driver: '' }));
+        setData(d => ({ ...d, code: '', driver: '', rg: '' }));
         setSelectedVtrs([]);
     }
 } />
