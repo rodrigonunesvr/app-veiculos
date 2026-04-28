@@ -41,8 +41,8 @@ export default function SignUp() {
                     console.error('Profile cleanup needed:', profileError)
                 }
 
-                // Redirect to Verification Page
-                navigate('/verification')
+                // Redireciona diretamente para a Home
+                navigate('/')
             }
         } catch (err) {
             setError(err.message)

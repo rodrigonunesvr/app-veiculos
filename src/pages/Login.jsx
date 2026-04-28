@@ -23,9 +23,7 @@ export default function Login() {
             navigate('/')
         } catch (err) {
             console.error(err)
-            if (err.message && err.message.includes('Email not confirmed')) {
-                setError('E-mail não confirmado. Verifique sua caixa de entrada.')
-            } else if (err.message && err.message.includes('Invalid login credentials')) {
+            if (err.message && err.message.includes('Invalid login credentials')) {
                 setError('E-mail ou senha incorretos.')
             } else {
                 setError('Erro ao entrar. Tente novamente.')
