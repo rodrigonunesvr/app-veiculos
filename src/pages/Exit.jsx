@@ -20,7 +20,8 @@ export default function Exit() {
         code: '',
         driver: '',
         destination: DESTINATIONS[0],
-        destOther: ''
+        destOther: '',
+        rg: ''
     })
 
     // VTR Multi-Select
@@ -31,6 +32,15 @@ export default function Exit() {
     const [search, setSearch] = useState('')
     const [confirming, setConfirming] = useState(false)
     const [loading, setLoading] = useState(false)
+
+    // Default to local time for datetime-local input
+    const getLocalNow = () => {
+        const now = new Date()
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+        return now.toISOString().slice(0, 16)
+    }
+    const [eventAt, setEventAt] = useState(getLocalNow())
+    const [customVtr, setCustomVtr] = useState('')
 
     useEffect(() => {
         fetchInside()
@@ -54,7 +64,8 @@ export default function Exit() {
             code: item.subject_code,
             driver: item.driver_name || item.person_name || '',
             destination: DESTINATIONS[0],
-            destOther: ''
+            destOther: '',
+            rg: item.person_doc || ''
         })
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
@@ -63,6 +74,10 @@ export default function Exit() {
         e.preventDefault()
         if (type === 'VTR') {
             if (selectedVtrs.length === 0) return alert('Selecione pelo menos uma viatura.')
+        } else if (type === 'EXTERNAL_VTR') {
+            if (!data.code) return alert('Prefixo da viatura obrigatório.')
+            if (!data.driver) return alert('Nome do condutor obrigatório.')
+            if (!data.rg) return alert('RG do condutor obrigatório.')
         } else {
             if (!data.code) return alert('Identificação obrigatória.')
         }
@@ -77,6 +92,7 @@ export default function Exit() {
                 direction: 'EXIT',
                 subject_type: type,
                 destination: finalDest,
+                event_at: new Date(eventAt).toISOString(),
                 created_by: profile?.id
             }
 
@@ -91,9 +107,9 @@ export default function Exit() {
                 const payload = {
                     ...payloadBase,
                     subject_code: data.code,
-                    driver_name: type === 'VEHICLE' ? data.driver : null,
+                    driver_name: (type === 'VEHICLE' || type === 'EXTERNAL_VTR') ? data.driver : null,
                     person_name: type === 'PEDESTRIAN' ? data.driver : null,
-                    person_doc: type === 'PEDESTRIAN' ? data.code : null,
+                    person_doc: (type === 'PEDESTRIAN' || type === 'EXTERNAL_VTR') ? (type === 'PEDESTRIAN' ? data.code : data.rg) : null,
                 }
                 const { error } = await supabase.from('movements').insert(payload)
                 if (error) throw error
@@ -129,37 +145,42 @@ export default function Exit() {
     < form onSubmit = { handlePreSubmit } >
         { type === 'VTR' ? (
         <div className="mb-3">
-            < label className ="block text-sm font-medium text-gray-700 mb-2">Selecionar Viaturas ({selectedVtrs.length})</label>
-                < div className ="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border p-2 rounded bg-gray-50">
-{
-    vtrList.map(v => (
-        <div
-            key={v.code}
-            onClick={() => toggleVtr(v.code)}
-            className={`p-2 rounded text-sm cursor-pointer border text-center transition-colors font-bold
-                          ${selectedVtrs.includes(v.code)
-                    ? 'bg-orange-600 text-white border-orange-700'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-orange-300'}`}
-        >
-            {v.code}
+            <label className="block text-sm font-medium text-gray-700 mb-2">Selecionar Viaturas ({selectedVtrs.length})</label>
+            <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border p-2 rounded bg-gray-50">
+                {vtrList.map(v => (
+                    <div
+                        key={v.code}
+                        onClick={() => toggleVtr(v.code)}
+                        className={`p-2 rounded text-sm cursor-pointer border text-center transition-colors font-bold
+                            ${selectedVtrs.includes(v.code)
+                                ? 'bg-orange-600 text-white border-orange-700'
+                                : 'bg-white text-gray-700 border-gray-200 hover:border-orange-300'}`}
+                    >
+                        {v.code}
+                    </div>
+                ))}
+            </div>
         </div>
-    ))
-}
-                </div >
-              </div >
-          ) : (
+        ) : (
     <>
         <Input
-            label={type === 'PEDESTRIAN' ? 'Documento' : 'Placa'}
+            label={type === 'EXTERNAL_VTR' ? 'Prefixo' : (type === 'PEDESTRIAN' ? 'Documento' : 'Placa')}
             value={data.code}
             onChange={e => handleChange('code', e.target.value.toUpperCase())}
-            placeholder={type === 'VEHICLE' ? 'ABC-1234' : ''}
+            placeholder={type === 'VEHICLE' ? 'ABC-1234' : (type === 'EXTERNAL_VTR' ? 'ABT-123' : '')}
         />
         <Input
             label={type === 'PEDESTRIAN' ? 'Nome' : 'Condutor'}
             value={data.driver}
             onChange={e => handleChange('driver', e.target.value)}
         />
+        {type === 'EXTERNAL_VTR' && (
+            <Input
+                label="RG do Condutor"
+                value={data.rg}
+                onChange={e => handleChange('rg', e.target.value)}
+            />
+        )}
     </>
 )}
 
@@ -182,6 +203,13 @@ onChange = { e => handleChange('destination', e.target.value) }
     />
           )
 }
+
+<Input
+    label="Horário do Sistema (Fato)"
+    type="datetime-local"
+    value={eventAt}
+    onChange={e => setEventAt(e.target.value)}
+/>
 
     < Button type ="submit" variant="danger" className="mt-2">Registrar Saída</Button>
         </form >
@@ -228,7 +256,9 @@ onChange = { e => handleChange('destination', e.target.value) }
         subject_code: getSummaryCode(),
         driver_name: data.driver,
         destination: data.destination === 'OUTROS' ? data.destOther : data.destination,
-        staff_name: profile?.full_name
+        staff_name: profile?.full_name,
+        event_at: eventAt,
+        rg: data.rg
     }}
 />
     </div >

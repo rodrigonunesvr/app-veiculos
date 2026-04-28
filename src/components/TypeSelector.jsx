@@ -2,11 +2,12 @@ export default function TypeSelector({ value, onChange }) {
     const types = [
         { id: 'VEHICLE', label: 'Veículo Civil' },
         { id: 'VTR', label: 'Viatura' },
+        { id: 'EXTERNAL_VTR', label: 'VTR Externa' },
         { id: 'PEDESTRIAN', label: 'Pedestre' }
     ]
 
     return (
-        <div className="flex gap-2 mb-4">
+        <div className="grid grid-cols-2 gap-2 mb-4">
     {
         types.map(t => (
             <button
