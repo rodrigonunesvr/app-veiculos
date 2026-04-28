@@ -20,8 +20,7 @@ export default function Entry() {
         code: '',
         driver: '',
         destination: DESTINATIONS[0],
-        destOther: '',
-        rg: ''
+        destOther: ''
     })
 
     // VTR Multi-Select Support
@@ -30,15 +29,6 @@ export default function Entry() {
 
     const [confirming, setConfirming] = useState(false)
     const [loading, setLoading] = useState(false)
-
-    // Default to local time for datetime-local input
-    const getLocalNow = () => {
-        const now = new Date()
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-        return now.toISOString().slice(0, 16)
-    }
-    const [eventAt, setEventAt] = useState(getLocalNow())
-    const [customVtr, setCustomVtr] = useState('')
 
     useEffect(() => {
         supabase.from('vtr_catalog').select('code').then(({ data }) => setVtrList(data || []))
@@ -66,10 +56,6 @@ export default function Entry() {
     const validate = () => {
         if (type === 'VTR') {
             if (selectedVtrs.length === 0) return 'Selecione pelo menos uma viatura.'
-        } else if (type === 'EXTERNAL_VTR') {
-            if (!data.code) return 'Prefixo da viatura obrigatório.'
-            if (!data.driver) return 'Nome do condutor obrigatório.'
-            if (!data.rg) return 'RG do condutor obrigatório.'
         } else {
             if (!data.code) return 'Preencha a identificação.'
         }
@@ -96,7 +82,6 @@ export default function Entry() {
                 direction: 'ENTRY',
                 subject_type: type,
                 destination: finalDest,
-                event_at: new Date(eventAt).toISOString(),
                 created_by: profile?.id // Optional, default is auth.uid()
             }
 
@@ -113,9 +98,9 @@ export default function Entry() {
                 const payload = {
                     ...payloadBase,
                     subject_code: data.code,
-                    driver_name: (type === 'VEHICLE' || type === 'EXTERNAL_VTR') ? data.driver : null,
+                    driver_name: type === 'VEHICLE' ? data.driver : null,
                     person_name: type === 'PEDESTRIAN' ? data.driver : null,
-                    person_doc: (type === 'PEDESTRIAN' || type === 'EXTERNAL_VTR') ? (type === 'PEDESTRIAN' ? data.code : data.rg) : null,
+                    person_doc: type === 'PEDESTRIAN' ? data.code : null,
                 }
                 const { error } = await supabase.from('movements').insert(payload)
                 if (error) throw error
@@ -193,29 +178,6 @@ export default function Entry() {
         )
 }
 
-{
-    type === 'EXTERNAL_VTR' && (
-        <>
-            <Input
-                label="Prefixo da Viatura"
-                value={data.code}
-                onChange={e => handleChange('code', e.target.value.toUpperCase())}
-                placeholder="Ex: ABT-123"
-            />
-            <Input
-                label="Nome do Condutor"
-                value={data.driver}
-                onChange={e => handleChange('driver', e.target.value)}
-            />
-            <Input
-                label="Documento (RG/CPF)"
-                value={data.rg}
-                onChange={e => handleChange('rg', e.target.value)}
-            />
-        </>
-    )
-}
-
 {/* PEDESTRIAN */ }
 {
     type === 'PEDESTRIAN' && (
@@ -255,13 +217,6 @@ onChange = { e => handleChange('destination', e.target.value) }
         )
 }
 
-<Input
-    label="Horário do Sistema (Fato)"
-    type="datetime-local"
-    value={eventAt}
-    onChange={e => setEventAt(e.target.value)}
-/>
-
     < Button type ="submit" variant="primary" className="mt-4">Continuar</Button>
       </form >
 
@@ -276,9 +231,7 @@ onChange = { e => handleChange('destination', e.target.value) }
             subject_code: getSummaryCode(),
             driver_name: data.driver,
             destination: data.destination === 'OUTROS' ? data.destOther : data.destination,
-            staff_name: profile?.full_name,
-            event_at: eventAt,
-            rg: data.rg
+            staff_name: profile?.full_name
         }}
     />
     </div >

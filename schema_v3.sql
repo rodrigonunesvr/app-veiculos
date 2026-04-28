@@ -18,7 +18,7 @@ create policy "Auth users select vtr" on vtr_catalog for select using (auth.role
 create table if not exists public.movements (
   id uuid default gen_random_uuid() primary key,
   direction text not null check (direction in ('ENTRY', 'EXIT')),
-  subject_type text not null check (subject_type in ('VEHICLE', 'VTR', 'PEDESTRIAN', 'EXTERNAL_VTR')),
+  subject_type text not null check (subject_type in ('VEHICLE', 'VTR', 'PEDESTRIAN')),
   subject_code text not null, -- Placa, Prefixo VTR ou Nome(Pedestre) + Doc
   driver_name text, -- Apenas Vehicle
   destination text, -- Todos
