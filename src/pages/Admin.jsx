@@ -113,8 +113,8 @@ export default function Admin() {
       const statusText = diffMin > 5 ? `RETRO (+${diffMin}m)` : "OK"
 
       const row = [
-        eventDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }),
-        createdDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }),
+        eventDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit' }),
+        createdDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit' }),
         m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
         m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXT' : m.subject_type,
         m.subject_code,
@@ -208,11 +208,11 @@ export default function Admin() {
             return (
               <tr key={m.id} className={`border-b hover:bg-gray-50 ${isRetroactive ? 'bg-red-50' : ''}`}>
                 <td className="p-3">
-                  <p className="font-bold text-gray-800">{eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="font-bold text-gray-800">{eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
                   <p className="text-[10px] text-gray-400">{eventDate.toLocaleDateString('pt-BR')}</p>
                 </td>
                 <td className="p-3">
-                  <p className="text-xs font-bold text-gray-800">{createdDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="text-xs font-bold text-gray-800">{createdDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
                   <p className="text-[10px] text-gray-500">{createdDate.toLocaleDateString('pt-BR')}</p>
                   {isRetroactive && (
                     <span className="text-[9px] bg-red-100 text-red-700 font-bold px-1 rounded block w-fit">

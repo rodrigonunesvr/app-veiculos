@@ -115,7 +115,7 @@ export default function Entry() {
                     subject_code: data.code,
                     driver_name: (type === 'VEHICLE' || type === 'EXTERNAL_VTR') ? data.driver : null,
                     person_name: type === 'PEDESTRIAN' ? data.driver : null,
-                    person_doc: (type === 'PEDESTRIAN' || type === 'EXTERNAL_VTR') ? (type === 'PEDESTRIAN' ? data.code : data.rg) : null,
+                    person_doc: (type === 'PEDESTRIAN') ? data.code : (data.rg || null),
                 }
                 const { error } = await supabase.from('movements').insert(payload)
                 if (error) throw error
@@ -163,6 +163,11 @@ export default function Entry() {
                 label="Condutor"
             value={data.driver}
             onChange={e => handleChange('driver', e.target.value)} 
+            />
+            <Input
+                label="Documento (RG/CPF)"
+                value={data.rg}
+                onChange={e => handleChange('rg', e.target.value)}
             />
         </>
     )
