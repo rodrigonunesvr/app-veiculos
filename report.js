@@ -139,3 +139,4 @@ cron.schedule('0 8 * * *', () => {
 console.log('Report Worker started. Scheduled for 08:00 daily.');
 // Run once on startup for testing
 run();
+// Trigger redeploy: 14:58
