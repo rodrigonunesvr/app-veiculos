@@ -1,0 +1,26 @@
+# INSTRUÇÕES PARA DEPLOY NO RAILWAY
+
+## 1. Configuração do App (PWA)
+No painel do serviço `app-veiculos` no Railway, certifique-se de adicionar as seguintes variáveis em "Variables":
+
+*   VITE_SUPABASE_URL = (Sua URL do Supabase)
+*   VITE_SUPABASE_ANON_KEY = (Sua chave ANON PUBLIC do Supabase)
+
+*Nota: O prefixo VITE_ é obrigatório para que o código do navegador consiga ler as variáveis.*
+
+## 2. Configuração do Robô de Relatórios (Worker)
+No painel do serviço `report-worker` no Railway, adicione as variáveis:
+
+*   SMTP_USER = guarda7gbm@gmail.com
+*   SMTP_PASS = cwpz tphz ayih yynl (Senha de App do Google)
+*   REPORT_EMAILS = guarda7gbm@gmail.com, grupamento07@gmail.com
+*   SUPABASE_URL = (Sua URL do Supabase)
+*   SUPABASE_SERVICE_ROLE_KEY = (Sua chave SERVICE ROLE do Supabase)
+
+## 3. Comando de Inicialização (Start Command)
+*   Para o **App (PWA)**: O Railway deve detectar automaticamente (npm run start ou similar).
+*   Para o **Worker**: No campo "Start Command" em "Settings", coloque:
+    `node report-worker/report.js` (se rodar da raiz) ou apenas `node report.js` (se o serviço estiver apontado para a pasta do worker).
+
+---
+Código atualizado e corrigido em 07/05/2026.

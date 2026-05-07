@@ -1,0 +1,288 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
+import Input from '../components/Input'
+import Button from '../components/Button'
+import TypeSelector from '../components/TypeSelector'
+import ConfirmationModal from '../components/ConfirmationModal'
+
+const DESTINATIONS = [
+    '7º GBM', 'SOCORRO', 'CSM', 'ESTAFETA', 'ODONTO.', 'CRSI', 'MANUTENÇÃO', 'OUTROS'
+]
+
+const RANKS = [
+    'CIVIL', 'SD', 'CB', 'SGT', 'SUBTEN', 'TEN', 'CAP', 'MAJ', 'TENCEL', 'CEL'
+]
+
+export default function Exit() {
+    const { profile } = useAuth()
+    const navigate = useNavigate()
+
+    const [type, setType] = useState('VEHICLE')
+    const [data, setData] = useState({
+        code: '',
+        driver: '',
+        destination: DESTINATIONS[0],
+        destOther: '',
+        rg: '',
+        rank: 'CIVIL'
+    })
+
+    // VTR Multi-Select
+    const [vtrList, setVtrList] = useState([])
+    const [selectedVtrs, setSelectedVtrs] = useState([])
+
+    const [insideList, setInsideList] = useState([])
+    const [search, setSearch] = useState('')
+    const [confirming, setConfirming] = useState(false)
+    const [loading, setLoading] = useState(false)
+
+    // Default to local time for datetime-local input
+    const getLocalNow = () => {
+        const now = new Date()
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+        return now.toISOString().slice(0, 16)
+    }
+    const [eventAt, setEventAt] = useState(getLocalNow())
+    const [customVtr, setCustomVtr] = useState('')
+
+    useEffect(() => {
+        fetchInside()
+        supabase.from('vtr_catalog').select('code').then(({ data }) => setVtrList(data || []))
+    }, [])
+
+    const fetchInside = async () => {
+        const { data } = await supabase.from('inside_subjects').select('*')
+        setInsideList(data || [])
+    }
+
+    const handleChange = (field, value) => setData(prev => ({ ...prev, [field]: value }))
+
+    const toggleVtr = (code) => {
+        setSelectedVtrs(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code])
+    }
+
+    const handleSelectFromList = (item) => {
+        setType(item.subject_type)
+        setData({
+            code: item.subject_code,
+            driver: item.driver_name || item.person_name || '',
+            destination: DESTINATIONS[0],
+            destOther: '',
+            rg: item.person_doc || ''
+        })
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
+    const handlePreSubmit = (e) => {
+        e.preventDefault()
+        if (type === 'VTR') {
+            if (selectedVtrs.length === 0) return alert('Selecione pelo menos uma viatura.')
+        } else if (type === 'EXTERNAL_VTR') {
+            if (!data.code) return alert('Prefixo da viatura obrigatório.')
+            if (!data.driver) return alert('Nome do condutor obrigatório.')
+            if (!data.rg) return alert('RG do condutor obrigatório.')
+        } else {
+            if (!data.code) return alert('Identificação obrigatória.')
+        }
+        setConfirming(true)
+    }
+
+    const handleConfirm = async () => {
+        setLoading(true)
+        try {
+            const finalDest = data.destination === 'OUTROS' ? data.destOther : data.destination
+            const payloadBase = {
+                direction: 'EXIT',
+                subject_type: type,
+                destination: finalDest,
+                event_at: new Date(eventAt).toISOString(),
+                created_by: profile?.id
+            }
+
+            if (type === 'VTR') {
+                const rows = selectedVtrs.map(vtrCode => ({
+                    ...payloadBase,
+                    subject_code: vtrCode
+                }))
+                const { error } = await supabase.from('movements').insert(rows)
+                if (error) throw error
+            } else {
+                const finalDriverName = (type === 'VEHICLE' && data.rank !== 'CIVIL') 
+                    ? `${data.rank} ${data.driver}` 
+                    : data.driver
+
+                const payload = {
+                    ...payloadBase,
+                    subject_code: data.code,
+                    driver_name: (type === 'VEHICLE' || type === 'EXTERNAL_VTR') ? finalDriverName : null,
+                    person_name: type === 'PEDESTRIAN' ? data.driver : null,
+                    person_doc: (type === 'PEDESTRIAN') ? data.code : (data.rg || null),
+                }
+                const { error } = await supabase.from('movements').insert(payload)
+                if (error) throw error
+            }
+
+            navigate('/')
+        } catch (err) {
+            alert('Erro: ' + err.message)
+            setConfirming(false)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const filteredList = insideList.filter(i =>
+        i.subject_code.includes(search.toUpperCase()) ||
+        (i.driver_name && i.driver_name?.toUpperCase().includes(search.toUpperCase()))
+    )
+
+    const getSummaryCode = () => {
+        if (type === 'VTR') return selectedVtrs.join(', ')
+        return data.code
+    }
+
+    return (
+        <div className="max-w-md mx-auto pb-24">
+            < div className ="bg-white p-6 rounded-lg shadow mb-6">
+                < h2 className ="text-xl font-bold mb-4 text-orange-700">Registrar Saída</h2>
+
+                    < TypeSelector value = { type } onChange = {(t) => { setType(t); setSelectedVtrs([]); setData(d => ({ ...d, code: '', driver: '', rg: '', rank: 'CIVIL' })); }
+} />
+
+    < form onSubmit = { handlePreSubmit } >
+        { type === 'VTR' ? (
+        <div className="mb-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Selecionar Viaturas ({selectedVtrs.length})</label>
+            <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border p-2 rounded bg-gray-50">
+                {vtrList.map(v => (
+                    <div
+                        key={v.code}
+                        onClick={() => toggleVtr(v.code)}
+                        className={`p-2 rounded text-sm cursor-pointer border text-center transition-colors font-bold
+                            ${selectedVtrs.includes(v.code)
+                                ? 'bg-orange-600 text-white border-orange-700'
+                                : 'bg-white text-gray-700 border-gray-200 hover:border-orange-300'}`}
+                    >
+                        {v.code}
+                    </div>
+                ))}
+            </div>
+        </div>
+        ) : (
+    <>
+        <Input
+            label={type === 'EXTERNAL_VTR' ? 'Prefixo' : (type === 'PEDESTRIAN' ? 'Documento' : 'Placa')}
+            value={data.code}
+            onChange={e => handleChange('code', e.target.value.toUpperCase())}
+            placeholder={type === 'VEHICLE' ? 'ABC-1234' : (type === 'EXTERNAL_VTR' ? 'ABT-123' : '')}
+        />
+        {type === 'VEHICLE' && (
+            <div className="mb-4 p-3 bg-orange-50 border border-orange-100 rounded-lg text-left">
+                <label className="block text-xs font-bold text-orange-800 uppercase mb-2">Posto / Graduação do Condutor</label>
+                <select
+                    className="w-full p-3 border-2 border-orange-200 rounded-lg bg-white font-bold text-orange-900 focus:border-orange-500 outline-none"
+                    value={data.rank}
+                    onChange={e => handleChange('rank', e.target.value)}
+                >
+                    {RANKS.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+            </div>
+        )}
+        <Input
+            label={type === 'PEDESTRIAN' ? 'Nome' : 'Condutor'}
+            value={data.driver}
+            onChange={e => handleChange('driver', e.target.value)}
+        />
+        {(type === 'EXTERNAL_VTR' || type === 'VEHICLE') && (
+            <Input
+                label={type === 'EXTERNAL_VTR' ? "RG do Condutor" : "Documento (RG/CPF)"}
+                value={data.rg}
+                onChange={e => handleChange('rg', e.target.value)}
+            />
+        )}
+    </>
+)}
+
+<div className="mb-3">
+    < label className ="block text-sm font-medium text-gray-700 mb-1">Destino</label>
+        < select
+className ="w-full p-2 border rounded-md"
+value = { data.destination }
+onChange = { e => handleChange('destination', e.target.value) }
+    >
+    { DESTINATIONS.map(d => <option key={d} value={d}>{d}</option>) }
+            </select >
+          </div >
+{
+    data.destination === 'OUTROS' && (
+        <Input
+            label="Qual destino?" 
+              value = { data.destOther } 
+              onChange={ e => handleChange('destOther', e.target.value) }
+    />
+          )
+}
+
+<Input
+    label="Horário do Sistema (Fato)"
+    type="datetime-local"
+    value={eventAt}
+    onChange={e => setEventAt(e.target.value)}
+/>
+
+    < Button type ="submit" variant="danger" className="mt-2">Registrar Saída</Button>
+        </form >
+      </div >
+
+{/* List (Only specific to single item selection, so hidden if VTR mode for clarity, or kept for reference?) 
+           Let's keep it but it will only auto-fill single fields, not multi vtr.
+       */}
+{
+    type !== 'VTR' && (
+        <div className="bg-white p-4 rounded-lg shadow">
+            < h3 className ="font-bold mb-2 text-gray-700 text-sm uppercase">Quem está DENTRO (Atalho)</h3>
+                < Input
+    placeholder ="Buscar..." 
+    value = { search }
+    onChange = { e => setSearch(e.target.value) }
+    className ="mb-2"
+        />
+        <div className="space-y-2 max-h-60 overflow-y-auto">
+    {
+        filteredList.map(item => (
+            <div key={item.id} className="flex justify-between items-center p-2 border rounded hover:bg-gray-50 cursor-pointer" onClick={() => handleSelectFromList(item)}>
+            < div >
+        <p className="font-bold">{item.subject_code}</p>
+        < p className ="text-xs text-gray-500">{item.subject_type}</p>
+               </div >
+            <span className="text-xs bg-gray-200 px-2 py-1 rounded">Selecionar</span>
+            </div >
+          ))
+    }
+        </div >
+      </div >
+      )
+}
+
+<ConfirmationModal
+    show={confirming}
+    onClose={() => setConfirming(false)}
+    onConfirm={handleConfirm}
+    loading={loading}
+    data={{
+        type: 'EXIT',
+        subject_type: type,
+        subject_code: getSummaryCode(),
+        driver_name: (type === 'VEHICLE' && data.rank !== 'CIVIL') ? `${data.rank} ${data.driver}` : data.driver,
+        destination: data.destination === 'OUTROS' ? data.destOther : data.destination,
+        staff_name: profile?.full_name,
+        event_at: eventAt,
+        rg: data.rg
+    }}
+/>
+    </div >
+  )
+}
+
