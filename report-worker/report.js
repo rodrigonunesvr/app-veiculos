@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import PDFDocument from 'pdfkit-table';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
 
@@ -9,32 +9,17 @@ dotenv.config();
 const {
   SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY,
-  SMTP_USER, // O seu e-mail do Gmail
-  SMTP_PASS, // A sua senha de App do Google (16 dígitos)
+  RESEND_API_KEY, // Chave do Resend (re_...)
   REPORT_EMAILS, // Lista de e-mails separados por vírgula
-  FROM_EMAIL // Remetente (geralmente o mesmo que SMTP_USER)
 } = process.env;
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SMTP_USER || !SMTP_PASS) {
-  console.error('Faltam variáveis de ambiente (SUPABASE ou SMTP)');
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !RESEND_API_KEY) {
+  console.error('Faltam variáveis de ambiente (SUPABASE ou RESEND_API_KEY)');
   process.exit(1);
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-// Configuração do Transportador SMTP (Gmail) - TENTATIVA 3 (Porta 465 SSL)
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // true para 465
-  auth: {
-    user: SMTP_USER,
-    pass: SMTP_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-});
+const resend = new Resend(RESEND_API_KEY);
 
 async function generateReport() {
   console.log('Generating daily report for', new Date().toLocaleDateString());
@@ -78,7 +63,6 @@ async function generateReport() {
         const eventDate = new Date(m.event_at);
         const createdDate = new Date(m.created_at);
         const diffMin = Math.round((createdDate - eventDate) / 60000);
-        const retroactiveMark = diffMin > 5 ? ` (R: +${diffMin}m)` : "";
 
         return [
           eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
@@ -110,8 +94,10 @@ async function run() {
     const pdfBuffer = await generateReport();
     const emails = REPORT_EMAILS.split(',').map(e => e.trim());
 
-    const mailOptions = {
-      from: FROM_EMAIL || SMTP_USER,
+    console.log('Sending email via Resend API...');
+    
+    const { data, error } = await resend.emails.send({
+      from: 'Sistema de Controle <onboarding@resend.dev>',
       to: emails,
       subject: `Relatório de Movimentação Diária - ${new Date().toLocaleDateString('pt-BR')}`,
       html: `<strong>Bom dia,</strong><br><br>Segue em anexo o relatório de entrada e saída das últimas 24 horas.<br><br>Sistema de Controle de Acesso`,
@@ -121,10 +107,13 @@ async function run() {
           content: pdfBuffer,
         },
       ],
-    };
+    });
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('E-mail enviado com sucesso (Gmail):', info.messageId);
+    if (error) {
+      console.error('Erro ao enviar pelo Resend:', error);
+    } else {
+      console.log('E-mail enviado com sucesso (Resend API):', data.id);
+    }
     
   } catch (err) {
     console.error('Erro fatal no robô de relatórios:', err);
@@ -132,7 +121,6 @@ async function run() {
 }
 
 // Run at 08:00 Every Day (Brazil/Brasilia Time)
-// Note: Ensure Railway server is set to America/Sao_Paulo or adjust the cron string
 cron.schedule('0 8 * * *', () => {
   console.log('Cron Triggered: Sending daily report...');
   run();
@@ -140,7 +128,7 @@ cron.schedule('0 8 * * *', () => {
   timezone: "America/Sao_Paulo"
 });
 
-console.log('Report Worker started. Scheduled for 08:00 daily.');
+console.log('Report Worker (RESEND API) started. Scheduled for 08:00 daily.');
 // Run once on startup for testing
 run();
-// Trigger redeploy: 15:05
+// Trigger redeploy: 15:30
