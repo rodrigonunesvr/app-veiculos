@@ -22,17 +22,17 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SMTP_USER || !SMTP_PASS) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// Configuração do Transportador SMTP (Gmail) - Configuração Robusta
+// Configuração do Transportador SMTP (Gmail) - TENTATIVA 3 (Porta 465 SSL)
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // true para 465, false para outras portas
+  port: 465,
+  secure: true, // true para 465
   auth: {
     user: SMTP_USER,
     pass: SMTP_PASS,
   },
   tls: {
-    rejectUnauthorized: false // Ajuda em ambientes de servidor
+    rejectUnauthorized: false
   }
 });
 
