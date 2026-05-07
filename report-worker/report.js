@@ -22,13 +22,18 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SMTP_USER || !SMTP_PASS) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// Configuração do Transportador SMTP (Gmail)
+// Configuração do Transportador SMTP (Gmail) - Configuração Robusta
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // true para 465, false para outras portas
   auth: {
     user: SMTP_USER,
     pass: SMTP_PASS,
   },
+  tls: {
+    rejectUnauthorized: false // Ajuda em ambientes de servidor
+  }
 });
 
 async function generateReport() {
