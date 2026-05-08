@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import PDFDocument from 'pdfkit-table';
-import { Resend } from 'resend';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
 
@@ -19,7 +18,6 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !RESEND_API_KEY) {
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-const resend = new Resend(RESEND_API_KEY);
 
 async function generateReport() {
   console.log('Generating daily report for', new Date().toLocaleDateString());
@@ -94,25 +92,37 @@ async function run() {
     const pdfBuffer = await generateReport();
     const emails = REPORT_EMAILS.split(',').map(e => e.trim());
 
-    console.log('Sending email via Resend API...');
+    console.log('Sending email via Resend API (FETCH)...');
     
-    const { data, error } = await resend.emails.send({
-      from: 'Sistema de Controle <onboarding@resend.dev>',
-      to: emails,
-      subject: `Relatório de Movimentação Diária - ${new Date().toLocaleDateString('pt-BR')}`,
-      html: `<strong>Bom dia,</strong><br><br>Segue em anexo o relatório de entrada e saída das últimas 24 horas.<br><br>Sistema de Controle de Acesso`,
-      attachments: [
-        {
-          filename: `relatorio_${new Date().toISOString().split('T')[0]}.pdf`,
-          content: pdfBuffer,
-        },
-      ],
+    // Converter buffer do PDF para Base64 para a API
+    const base64Content = pdfBuffer.toString('base64');
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RESEND_API_KEY}`
+      },
+      body: JSON.stringify({
+        from: 'Sistema de Controle <onboarding@resend.dev>',
+        to: emails,
+        subject: `Relatório de Movimentação Diária - ${new Date().toLocaleDateString('pt-BR')}`,
+        html: `<strong>Bom dia,</strong><br><br>Segue em anexo o relatório de entrada e saída das últimas 24 horas.<br><br>Sistema de Controle de Acesso`,
+        attachments: [
+          {
+            filename: `relatorio_${new Date().toISOString().split('T')[0]}.pdf`,
+            content: base64Content,
+          },
+        ],
+      })
     });
 
-    if (error) {
-      console.error('Erro ao enviar pelo Resend:', error);
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error('Erro na API do Resend:', result);
     } else {
-      console.log('E-mail enviado com sucesso (Resend API):', data.id);
+      console.log('E-mail enviado com sucesso (Resend API):', result.id);
     }
     
   } catch (err) {
@@ -128,7 +138,7 @@ cron.schedule('0 8 * * *', () => {
   timezone: "America/Sao_Paulo"
 });
 
-console.log('Report Worker (RESEND API) started. Scheduled for 08:00 daily.');
+console.log('Report Worker (STABLE FETCH) started. Scheduled for 08:00 daily.');
 // Run once on startup for testing
 run();
-// Trigger redeploy: 15:30
+// Trigger redeploy: 15:45
