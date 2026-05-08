@@ -63,8 +63,8 @@ async function generateReport() {
         const diffMin = Math.round((createdDate - eventDate) / 60000);
 
         return [
-          eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          createdDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }),
+          eventDate.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }),
+          createdDate.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }),
           m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
           m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXT' : m.subject_type,
           m.subject_code,
