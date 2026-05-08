@@ -92,41 +92,47 @@ async function run() {
     const pdfBuffer = await generateReport();
     const emails = REPORT_EMAILS.split(',').map(e => e.trim());
 
-    console.log('Sending email via Resend API (FETCH)...');
+    console.log(`Starting individual sending to ${emails.length} recipients...`);
     
-    // Converter buffer do PDF para Base64 para a API
     const base64Content = pdfBuffer.toString('base64');
 
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RESEND_API_KEY}`
-      },
-      body: JSON.stringify({
-        from: 'Sistema de Controle <onboarding@resend.dev>',
-        to: emails,
-        subject: `Relatório de Movimentação Diária - ${new Date().toLocaleDateString('pt-BR')}`,
-        html: `<strong>Bom dia,</strong><br><br>Segue em anexo o relatório de entrada e saída das últimas 24 horas.<br><br>Sistema de Controle de Acesso`,
-        attachments: [
-          {
-            filename: `relatorio_${new Date().toISOString().split('T')[0]}.pdf`,
-            content: base64Content,
+    for (const email of emails) {
+      try {
+        console.log(`Sending to: ${email}...`);
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${RESEND_API_KEY}`
           },
-        ],
-      })
-    });
+          body: JSON.stringify({
+            from: 'Sistema de Controle <onboarding@resend.dev>',
+            to: email,
+            subject: `Relatório de Movimentação Diária - ${new Date().toLocaleDateString('pt-BR')}`,
+            html: `<strong>Bom dia,</strong><br><br>Segue em anexo o relatório de entrada e saída das últimas 24 horas.<br><br>Sistema de Controle de Acesso`,
+            attachments: [
+              {
+                filename: `relatorio_${new Date().toISOString().split('T')[0]}.pdf`,
+                content: base64Content,
+              },
+            ],
+          })
+        });
 
-    const result = await response.json();
+        const result = await response.json();
 
-    if (!response.ok) {
-      console.error('Erro na API do Resend:', result);
-    } else {
-      console.log('E-mail enviado com sucesso (Resend API):', result.id);
+        if (!response.ok) {
+          console.error(`Falha no envio para ${email}:`, result.message || result);
+        } else {
+          console.log(`Sucesso para ${email}! ID:`, result.id);
+        }
+      } catch (innerErr) {
+        console.error(`Erro de conexão ao enviar para ${email}:`, innerErr.message);
+      }
     }
     
   } catch (err) {
-    console.error('Erro fatal no robô de relatórios:', err);
+    console.error('Erro fatal no processamento do robô:', err);
   }
 }
 
