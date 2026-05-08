@@ -1,0 +1,7 @@
+ESTE PROJETO FOI REVISADO E ESTÁ COM A VERSÃO DA API DO RESEND.
+Data: 07/05/2026
+
+Arquivos verificados:
+- package.json (OK)
+- report-worker/package.json (OK)
+- report-worker/report.js (OK)
