@@ -31,20 +31,18 @@ const transporter = nodemailer.createTransport({
 });
 
 async function generateReport() {
-  console.log('Generating daily report for', new Date().toLocaleDateString());
+  console.log('Generating daily report for', new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }));
 
-  const endDate = new Date();
-  endDate.setHours(8, 0, 0, 0);
-
-  const startDate = new Date(endDate);
-  startDate.setDate(startDate.getDate() - 1);
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setHours(yesterday.getHours() - 24);
 
   // 1. Fetch data from Supabase View
   const { data: movements, error } = await supabase
     .from('movements_report')
     .select('*')
-    .gte('event_at', startDate.toISOString())
-    .lte('event_at', endDate.toISOString())
+    .gte('event_at', yesterday.toISOString())
+    .lte('event_at', now.toISOString())
     .order('event_at', { ascending: true });
 
   if (error) {
@@ -66,7 +64,9 @@ async function generateReport() {
     });
 
     doc.fontSize(16).text('RELATÓRIO DE AUDITORIA V5 - CONTROLE DE ACESSO', { align: 'center' });
-    doc.fontSize(10).text(`Período de Auditoria: ${startDate.toLocaleString('pt-BR')} até ${endDate.toLocaleString('pt-BR')}`, { align: 'center' });
+    const periodStart = yesterday.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const periodEnd = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    doc.fontSize(10).text(`Período de Auditoria: ${periodStart} até ${periodEnd}`, { align: 'center' });
     doc.moveDown();
 
     const table = {
@@ -79,8 +79,8 @@ async function generateReport() {
         const retroactiveMark = diffMin > 5 ? ` (R: +${diffMin}m)` : "";
 
         return [
-          eventDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          createdDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }),
+          eventDate.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }),
+          createdDate.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }),
           m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
           m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXT' : m.subject_type,
           m.subject_code,
@@ -141,5 +141,5 @@ cron.schedule('0 8 * * *', () => {
 });
 
 console.log('Report Worker started. Scheduled for 08:00 daily.');
-// Run once on startup for testing (Optional)
-// run();
+// Run once on startup to guarantee first email sending
+run();
