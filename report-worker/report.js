@@ -1,48 +1,41 @@
 import { createClient } from '@supabase/supabase-js';
 import PDFDocument from 'pdfkit-table';
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import cron from 'node-cron';
 
 dotenv.config();
 
 const {
   SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY,
-  SMTP_USER, // O seu e-mail do Gmail
-  SMTP_PASS, // A sua senha de App do Google (16 dígitos)
+  RESEND_API_KEY, // Chave do Resend (re_...)
   REPORT_EMAILS, // Lista de e-mails separados por vírgula
-  FROM_EMAIL // Remetente (geralmente o mesmo que SMTP_USER)
 } = process.env;
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SMTP_USER || !SMTP_PASS) {
-  console.error('Faltam variáveis de ambiente (SUPABASE ou SMTP)');
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !RESEND_API_KEY) {
+  console.error('Faltam variáveis de ambiente (SUPABASE ou RESEND_API_KEY)');
   process.exit(1);
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// Configuração do Transportador SMTP (Gmail)
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: SMTP_USER,
-    pass: SMTP_PASS,
-  },
-});
-
 async function generateReport() {
-  console.log('Generating daily report for', new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }));
+  console.log('Generating daily report for', new Date().toLocaleDateString());
 
+  // Window: yesterday at 08:00 → today at 08:00 (24h)
   const now = new Date();
-  const yesterday = new Date(now);
-  yesterday.setHours(yesterday.getHours() - 24);
+  const periodEnd = new Date(now);
+  periodEnd.setHours(8, 0, 0, 0);
+
+  const periodStart = new Date(periodEnd);
+  periodStart.setDate(periodStart.getDate() - 1);
 
   // 1. Fetch data from Supabase View
   const { data: movements, error } = await supabase
     .from('movements_report')
     .select('*')
-    .gte('event_at', yesterday.toISOString())
-    .lte('event_at', now.toISOString())
+    .gte('event_at', periodStart.toISOString())
+    .lt('event_at', periodEnd.toISOString())
     .order('event_at', { ascending: true });
 
   if (error) {
@@ -64,9 +57,7 @@ async function generateReport() {
     });
 
     doc.fontSize(16).text('RELATÓRIO DE AUDITORIA V5 - CONTROLE DE ACESSO', { align: 'center' });
-    const periodStart = yesterday.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    const periodEnd = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    doc.fontSize(10).text(`Período de Auditoria: ${periodStart} até ${periodEnd}`, { align: 'center' });
+    doc.fontSize(10).text(`Período de Auditoria: ${periodStart.toLocaleString('pt-BR')} até ${periodEnd.toLocaleString('pt-BR')}`, { align: 'center' });
     doc.moveDown();
 
     const table = {
@@ -76,11 +67,10 @@ async function generateReport() {
         const eventDate = new Date(m.event_at);
         const createdDate = new Date(m.created_at);
         const diffMin = Math.round((createdDate - eventDate) / 60000);
-        const retroactiveMark = diffMin > 5 ? ` (R: +${diffMin}m)` : "";
 
         return [
-          eventDate.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }),
-          createdDate.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }),
+          eventDate.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }),
+          createdDate.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }),
           m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
           m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXT' : m.subject_type,
           m.subject_code,
@@ -89,7 +79,7 @@ async function generateReport() {
           m.staff_full_name ? `${m.staff_full_name.split(' ')[0]} (${m.staff_rg || 'S/RG'})` : 'Sist.',
           diffMin > 5 ? `RET (+${diffMin}m)` : "OK"
         ];
-      }) : [["-", "-", "-", "-", "Nenhuma movimentação nas últimas 24h", "-", "-", "-", "-"]],
+      }) : [["-", "-", "-", "-", "Nenhuma movimentação no período", "-", "-", "-", "-"]],
     };
 
     doc.table(table, {
@@ -108,38 +98,59 @@ async function run() {
     const pdfBuffer = await generateReport();
     const emails = REPORT_EMAILS.split(',').map(e => e.trim());
 
-    const mailOptions = {
-      from: FROM_EMAIL || SMTP_USER,
-      to: emails,
-      subject: `Relatório de Movimentação Diária - ${new Date().toLocaleDateString('pt-BR')}`,
-      html: `<strong>Bom dia,</strong><br><br>Segue em anexo o relatório de entrada e saída das últimas 24 horas.<br><br>Sistema de Controle de Acesso`,
-      attachments: [
-        {
-          filename: `relatorio_${new Date().toISOString().split('T')[0]}.pdf`,
-          content: pdfBuffer,
-        },
-      ],
-    };
+    console.log(`Starting individual sending to ${emails.length} recipients...`);
+    
+    const base64Content = pdfBuffer.toString('base64');
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('E-mail enviado com sucesso (Gmail):', info.messageId);
+    for (const email of emails) {
+      try {
+        console.log(`Sending to: ${email}...`);
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${RESEND_API_KEY}`
+          },
+          body: JSON.stringify({
+            from: 'Sistema de Controle <onboarding@resend.dev>',
+            to: email,
+            subject: `Relatório de Movimentação Diária - ${new Date().toLocaleDateString('pt-BR')}`,
+            html: `<strong>Bom dia,</strong><br><br>Segue em anexo o relatório de entrada e saída das últimas 24 horas.<br><br>Sistema de Controle de Acesso`,
+            attachments: [
+              {
+                filename: `relatorio_${new Date().toISOString().split('T')[0]}.pdf`,
+                content: base64Content,
+              },
+            ],
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          console.error(`Falha no envio para ${email}:`, result.message || result);
+        } else {
+          console.log(`Sucesso para ${email}! ID:`, result.id);
+        }
+      } catch (innerErr) {
+        console.error(`Erro de conexão ao enviar para ${email}:`, innerErr.message);
+      }
+    }
     
   } catch (err) {
-    console.error('Erro fatal no robô de relatórios:', err);
+    console.error('Erro fatal no processamento do robô:', err);
   }
 }
 
-import cron from 'node-cron';
-
-// Run at 08:00 Every Day (Brazil/Brasilia Time)
-// Note: Ensure Railway server is set to America/Sao_Paulo or adjust the cron string
-cron.schedule('0 8 * * *', () => {
+// Run at 08:01 Every Day (Brazil/Brasilia Time) - window: yesterday 08:00 → today 08:00
+cron.schedule('1 8 * * *', () => {
   console.log('Cron Triggered: Sending daily report...');
   run();
 }, {
   timezone: "America/Sao_Paulo"
 });
 
-console.log('Report Worker started. Scheduled for 08:00 daily.');
-// Run once on startup to guarantee first email sending
+console.log('Report Worker (STABLE FETCH) started. Scheduled for 08:01 daily.');
+// Run once on startup for testing
 run();
+// Trigger redeploy: 15:45
