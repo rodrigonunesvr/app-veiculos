@@ -21,6 +21,11 @@ export default function Admin() {
   // Edição de Usuário
   const [editingUser, setEditingUser] = useState(null)
 
+  // Catálogo de Viaturas (VTR)
+  const [vtrs, setVtrs] = useState([])
+  const [newVtrCode, setNewVtrCode] = useState('')
+  const [vtrLoading, setVtrLoading] = useState(false)
+
   useEffect(() => {
     const end = new Date()
     const start = new Date()
@@ -29,7 +34,44 @@ export default function Admin() {
     setEndDate(end.toISOString().split('T')[0])
     fetchMovements()
     fetchUsers()
+    fetchVtrs()
   }, [])
+
+  const fetchVtrs = async () => {
+    const { data } = await supabase.from('vtr_catalog').select('code').order('code')
+    setVtrs(data || [])
+  }
+
+  const handleAddVtr = async (e) => {
+    e.preventDefault()
+    const code = newVtrCode.trim().toUpperCase()
+    if (!code) return
+    setVtrLoading(true)
+    try {
+      const { error } = await supabase.from('vtr_catalog').insert({ code })
+      if (error) throw error
+      setNewVtrCode('')
+      await fetchVtrs()
+    } catch (err) {
+      alert('Erro ao adicionar viatura: ' + err.message)
+    } finally {
+      setVtrLoading(false)
+    }
+  }
+
+  const handleDeleteVtr = async (code) => {
+    if (!window.confirm(`Remover a viatura "${code}" do catálogo?`)) return
+    setVtrLoading(true)
+    try {
+      const { error } = await supabase.from('vtr_catalog').delete().eq('code', code)
+      if (error) throw error
+      await fetchVtrs()
+    } catch (err) {
+      alert('Erro ao remover viatura: ' + err.message)
+    } finally {
+      setVtrLoading(false)
+    }
+  }
 
   const fetchMovements = async () => {
     setLoading(true)
@@ -343,6 +385,60 @@ export default function Admin() {
             </a>
           </div>
         </div>
+      </div>
+
+      {/* ===== GESTÃO DE VIATURAS (VTR) ===== */}
+      <div className="bg-white p-6 rounded-lg shadow space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="font-bold text-gray-800 flex items-center gap-2">
+            🚒 Catálogo de Viaturas (VTR)
+          </h3>
+          <span className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-500 font-mono">
+            {vtrs.length} viatura(s)
+          </span>
+        </div>
+
+        {/* Formulário de adição */}
+        <form onSubmit={handleAddVtr} className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Ex: AR-363, VL-101(CMDT)"
+            className="flex-1 p-2 border rounded text-sm uppercase"
+            value={newVtrCode}
+            onChange={e => setNewVtrCode(e.target.value)}
+            disabled={vtrLoading}
+          />
+          <button
+            type="submit"
+            disabled={vtrLoading || !newVtrCode.trim()}
+            className="px-4 py-2 bg-red-700 text-white text-sm font-bold rounded hover:bg-red-800 disabled:opacity-50"
+          >
+            + Adicionar
+          </button>
+        </form>
+
+        {/* Lista de viaturas */}
+        <div className="border rounded divide-y overflow-hidden max-h-72 overflow-y-auto">
+          {vtrs.length === 0 && (
+            <p className="p-4 text-center text-xs text-gray-400">Nenhuma viatura cadastrada.</p>
+          )}
+          {vtrs.map(v => (
+            <div key={v.code} className="flex items-center justify-between px-3 py-2 hover:bg-gray-50">
+              <span className="font-bold text-sm text-gray-800 font-mono">{v.code}</span>
+              <button
+                onClick={() => handleDeleteVtr(v.code)}
+                disabled={vtrLoading}
+                className="text-red-500 hover:text-red-700 text-xs font-bold disabled:opacity-40"
+              >
+                Remover
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-[10px] text-gray-400 italic">
+          * As alterações são salvas imediatamente e refletem em todas as telas de entrada/saída.
+        </p>
       </div>
 
       {editingUser && (
