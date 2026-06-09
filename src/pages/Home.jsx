@@ -32,7 +32,7 @@ export default function Home() {
       .from('inside_subjects')
       .select('*')
       .order('event_at', { ascending: false })
-      .limit(100)
+      .limit(15)
 
     setList(data || [])
     setLoading(false)
