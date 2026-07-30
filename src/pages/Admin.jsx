@@ -214,7 +214,7 @@ export default function Admin() {
             <select className="border p-1 rounded" value={filterType} onChange={e => setFilterType(e.target.value)}>
               <option value="ALL">Todos</option>
               <option value="VEHICLE">Veículo</option>
-              <option value="VTR">Viatura</option>
+              <option value="VTR">VIATURAS (SOCORRO)</option>
               <option value="EXTERNAL_VTR">VTR Externa</option>
               <option value="PEDESTRIAN">Pedestre</option>
             </select>
@@ -391,7 +391,7 @@ export default function Admin() {
       <div className="bg-white p-6 rounded-lg shadow space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="font-bold text-gray-800 flex items-center gap-2">
-            🚒 Catálogo de Viaturas (VTR)
+            🚒 Catálogo de VIATURAS (SOCORRO)
           </h3>
           <span className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-500 font-mono">
             {vtrs.length} viatura(s)
