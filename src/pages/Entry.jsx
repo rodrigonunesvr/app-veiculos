@@ -39,8 +39,29 @@ export default function Entry() {
     // Default to local time for datetime-local input
     const getLocalNow = () => {
         const now = new Date()
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-        return now.toISOString().slice(0, 16)
+        const year = now.getFullYear()
+        const month = String(now.getMonth() + 1).padStart(2, '0')
+        const day = String(now.getDate()).padStart(2, '0')
+        const hours = String(now.getHours()).padStart(2, '0')
+        const minutes = String(now.getMinutes()).padStart(2, '0')
+        return `${year}-${month}-${day}T${hours}:${minutes}`
+    }
+
+    // Converte datetime-local para ISO com offset local (ex: 2026-07-29T08:00:00-03:00)
+    const toLocalISO = (datetimeLocalStr) => {
+        const dt = new Date(datetimeLocalStr)
+        const offset = -dt.getTimezoneOffset()
+        const sign = offset >= 0 ? '+' : '-'
+        const absOffset = Math.abs(offset)
+        const oh = String(Math.floor(absOffset / 60)).padStart(2, '0')
+        const om = String(absOffset % 60).padStart(2, '0')
+        const year = dt.getFullYear()
+        const month = String(dt.getMonth() + 1).padStart(2, '0')
+        const day = String(dt.getDate()).padStart(2, '0')
+        const hours = String(dt.getHours()).padStart(2, '0')
+        const minutes = String(dt.getMinutes()).padStart(2, '0')
+        const seconds = String(dt.getSeconds()).padStart(2, '0')
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${sign}${oh}:${om}`
     }
     const [eventAt, setEventAt] = useState(getLocalNow())
     const [customVtr, setCustomVtr] = useState('')
@@ -101,7 +122,7 @@ export default function Entry() {
                 direction: 'ENTRY',
                 subject_type: type,
                 destination: finalDest,
-                event_at: new Date(eventAt).toISOString(),
+                event_at: toLocalISO(eventAt),
                 created_by: profile?.id // Optional, default is auth.uid()
             }
 
