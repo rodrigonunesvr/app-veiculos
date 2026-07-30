@@ -1,7 +1,7 @@
 export default function TypeSelector({ value, onChange }) {
     const types = [
         { id: 'VEHICLE', label: 'Veículo Civil' },
-        { id: 'VTR', label: 'VIATURAS (SOCORRO)' },
+        { id: 'VTR', label: 'VTR Socorro' },
         { id: 'EXTERNAL_VTR', label: 'VTR Externa' },
         { id: 'PEDESTRIAN', label: 'Pedestre' }
     ]

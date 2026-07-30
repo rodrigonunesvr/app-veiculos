@@ -5,7 +5,7 @@ import { LogIn, LogOut, RefreshCw } from 'lucide-react'
 
 const TYPE_LABELS = {
   VEHICLE: 'Veículo',
-  VTR: 'VIATURAS (SOCORRO)',
+  VTR: 'VTR Socorro',
   EXTERNAL_VTR: 'VTR Externa',
   PEDESTRIAN: 'Pedestre',
 }
