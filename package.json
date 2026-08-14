@@ -7,8 +7,7 @@
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview",
-        "start": "serve -s dist -l $PORT",
-        "worker": "node report-worker/report.js"
+        "start": "serve -s dist -l $PORT"
     },
     "dependencies": {
         "@supabase/supabase-js": "^2.39.0",
@@ -18,13 +17,7 @@
         "react-dom": "^18.2.0",
         "react-router-dom": "^6.21.0",
         "jspdf": "^2.5.1",
-        "jspdf-autotable": "^3.8.1",
-        "pdfkit": "^0.15.0",
-        "pdfkit-table": "^0.1.99",
-        "nodemailer": "^6.9.13",
-        "resend": "^3.2.0",
-        "dotenv": "^16.4.1",
-        "node-cron": "^3.0.3"
+        "jspdf-autotable": "^3.8.1"
     },
     "devDependencies": {
         "@vitejs/plugin-react": "^4.2.0",

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import Button from '../components/Button'
-import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import { generateReportPDF } from '../lib/pdfGenerator'
 
 export default function Admin() {
   const [movements, setMovements] = useState([])
@@ -28,10 +27,19 @@ export default function Admin() {
 
   useEffect(() => {
     const end = new Date()
-    const start = new Date()
-    start.setDate(end.getDate() - 7)
-    setStartDate(start.toISOString().split('T')[0])
-    setEndDate(end.toISOString().split('T')[0])
+    end.setHours(8, 0, 0, 0)
+    
+    const start = new Date(end)
+    start.setDate(end.getDate() - 1)
+    
+    const formatDateTimeLocal = (d) => {
+        const offset = d.getTimezoneOffset()
+        const dLocal = new Date(d.getTime() - (offset*60*1000))
+        return dLocal.toISOString().slice(0,16)
+    }
+
+    setStartDate(formatDateTimeLocal(start))
+    setEndDate(formatDateTimeLocal(end))
     fetchMovements()
     fetchUsers()
     fetchVtrs()
@@ -82,8 +90,8 @@ export default function Admin() {
       .order('event_at', { ascending: false })
       .limit(500)
 
-    if (startDate) query = query.gte('event_at', startDate + 'T00:00:00')
-    if (endDate) query = query.lte('event_at', endDate + 'T23:59:59')
+    if (startDate) query = query.gte('event_at', new Date(startDate).toISOString())
+    if (endDate) query = query.lte('event_at', new Date(endDate).toISOString())
     if (filterType !== 'ALL') query = query.eq('subject_type', filterType)
 
     const { data, error } = await query
@@ -138,57 +146,7 @@ export default function Admin() {
   }
 
   const exportPDF = () => {
-    const doc = new jsPDF('l', 'mm', 'a4') // Mudando para Paisagem (Landscape) para caber tudo
-    doc.setFontSize(14)
-    doc.text("RELATÓRIO DE AUDITORIA - CONTROLE DE ACESSO (V5)", 14, 15)
-    doc.setFontSize(10)
-    doc.text(`Período: ${startDate} a ${endDate}`, 14, 22)
-
-    const tableColumn = ["Sistema (Fato)", "Lançamento", "Ação", "Tipo", "ID", "Condutor/Doc", "Destino", "Responsável", "Status"]
-    const tableRows = []
-
-    movements.forEach(m => {
-      const staff = m.staff_full_name ? `${m.staff_full_name} (${m.staff_rg || 'S/RG'})` : 'Sistema'
-      const eventDate = new Date(m.event_at)
-      const createdDate = new Date(m.created_at)
-      const diffMin = Math.round((createdDate - eventDate) / 60000)
-      const statusText = diffMin > 5 ? `RETRO (+${diffMin}m)` : "OK"
-
-      const row = [
-        eventDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit' }),
-        createdDate.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit' }),
-        m.direction === 'ENTRY' ? 'ENTRADA' : 'SAÍDA',
-        m.subject_type === 'EXTERNAL_VTR' ? 'VTR EXT' : m.subject_type,
-        m.subject_code,
-        `${m.driver_name || m.person_name || '-'} / ${m.person_doc || '-'}`,
-        m.destination || '-',
-        staff,
-        statusText
-      ]
-      tableRows.push(row)
-    })
-
-    doc.autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 30,
-      styles: { fontSize: 6, cellPadding: 1.5 },
-      columnStyles: {
-        0: { cellWidth: 32 }, // Ocorrência
-        1: { cellWidth: 20 }, // Sistema
-        8: { cellWidth: 30 }  // Status
-      },
-      didParseCell: (data) => {
-        if (data.section === 'body' && data.column.index === 8) {
-          if (data.cell.raw !== "OK") {
-            data.cell.styles.textColor = [200, 0, 0]; // Red
-            data.cell.styles.fontStyle = 'bold';
-          }
-        }
-      }
-    })
-
-    doc.save(`relatorio_${startDate}.pdf`)
+    generateReportPDF(movements, new Date(startDate), new Date(endDate))
   }
 
   const paginatedMovements = movements.slice((movementsPage - 1) * MOVEMENTS_PER_PAGE, movementsPage * MOVEMENTS_PER_PAGE)
@@ -203,11 +161,11 @@ export default function Admin() {
         <div className="flex flex-wrap gap-2 items-end">
           <div>
             <label className="block text-xs text-gray-500">Início</label>
-            <input type="date" className="border p-1 rounded" value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <input type="datetime-local" className="border p-1 rounded" value={startDate} onChange={e => setStartDate(e.target.value)} />
           </div>
           <div>
             <label className="block text-xs text-gray-500">Fim</label>
-            <input type="date" className="border p-1 rounded" value={endDate} onChange={e => setEndDate(e.target.value)} />
+            <input type="datetime-local" className="border p-1 rounded" value={endDate} onChange={e => setEndDate(e.target.value)} />
           </div>
           <div>
             <label className="block text-xs text-gray-500">Tipo</label>
