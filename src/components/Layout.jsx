@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { Home, LogIn, LogOut, LayoutDashboard, UserX, Menu } from 'lucide-react'
+import { Home, LogIn, LogOut, LayoutDashboard, FileText } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
@@ -50,9 +50,13 @@ export default function Layout() {
                     <span>Entrada</span>
         </Link >
             <Link to="/exit" className={navItemClass('/exit')}>
-                < LogOut size = { 24} className ="rotate-180" />
-                    < span > Saída</span >
-        </Link >
+                <LogOut size={24} className="rotate-180" />
+                <span>Saída</span>
+            </Link>
+            <Link to="/report" className={navItemClass('/report')}>
+                <FileText size={24} />
+                <span>Relatório</span>
+            </Link>
             { isAdmin && (
                 <Link to="/admin" className={navItemClass('/admin')}>
                     < LayoutDashboard size = { 24} />

@@ -11,6 +11,7 @@ import Home from './pages/Home'
 import Entry from './pages/Entry'
 import Exit from './pages/Exit'
 import Admin from './pages/Admin'
+import Report from './pages/Report'
 
 // Error Boundary Component
 function ErrorFallback({ error }) {
@@ -58,6 +59,7 @@ export default function App() {
                         <Route path="/entry" element={<Entry />} />
                         <Route path="/exit" element={<Exit />} />
                         <Route path="/admin" element={<Admin />} />
+                        <Route path="/report" element={<Report />} />
                     </Route>
 
                     {/* Fallback */}
