@@ -59,18 +59,10 @@ export function generateReportPDF(movements, periodStart, periodEnd) {
     }
 
     doc.setFontSize(10);
-    
-    // Assinatura 1 (Esquerda)
-    doc.line(40, signY, 240, signY);
-    doc.text('Oficial de Dia', 140, signY + 15, { align: 'center' });
-    
-    // Assinatura 2 (Centro)
-    doc.line(pageWidth / 2 - 100, signY, pageWidth / 2 + 100, signY);
-    doc.text('Comandante da Guarda', pageWidth / 2, signY + 15, { align: 'center' });
 
-    // Assinatura 3 (Direita)
-    doc.line(pageWidth - 240, signY, pageWidth - 40, signY);
-    doc.text('Adjunto ao Oficial de Dia', pageWidth - 140, signY + 15, { align: 'center' });
+    // Assinatura - Comandante da Guarda (Centro)
+    doc.line(pageWidth / 2 - 120, signY, pageWidth / 2 + 120, signY);
+    doc.text('Comandante da Guarda', pageWidth / 2, signY + 15, { align: 'center' });
 
     // Informação de geração
     doc.setFontSize(8);
